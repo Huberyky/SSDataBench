@@ -1,0 +1,17 @@
+# Custom generation parameters.
+llm_parameters:
+  model: "gpt-4"
+  temperature: 0.8
+  top_p: 0.9
+  max_completion_tokens: 3000
+
+threading:
+  default_max_workers: 2
+  max_workers_limit: 10
+
+generation:
+  # output_directory provided by calling script
+  # num_profiles provided by calling script
+  max_retries: 5
+  retry_delay: 2.0
+  progress_report_interval: 5

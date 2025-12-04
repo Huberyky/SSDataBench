@@ -1,0 +1,14 @@
+llm_parameters:
+  model: "deepseek/deepseek-chat"
+  temperature: 1
+  top_p: 1.0
+  max_completion_tokens: 4000
+
+threading:
+  default_max_workers: 8
+  max_workers_limit: 8
+
+generation:
+  max_retries: 3
+  retry_delay: 1.0
+  progress_report_interval: 10

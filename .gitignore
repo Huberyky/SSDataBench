@@ -1,0 +1,11 @@
+.env
+.DS_Store
+.vscode/
+**__pycache__/
+*.pyc
+*.out
+*.csv
+real_data/*
+simulated_data/*
+evaluation_results/*
+visualization_figures/*

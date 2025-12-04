@@ -1,0 +1,134 @@
+real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-4_temp1.0_top1.0.csv"
+sim_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-4_temp1.0_top1.0.csv"
+out_dir: "./1111"
+
+bootstrap_B: 10
+alpha: 0.05
+bootstrap_sample_n: 500
+
+variables:
+  age:
+    name: Age
+    type: numeric
+    input: true
+    description: Age
+    domain: Demography
+    allowed:
+      min: 0
+      max: 90
+
+  gender:
+    name: Gender
+    type: categorical
+    input: true
+    description: Sex
+    domain: Demography
+    allowed:
+      - Female
+      - Male
+
+  race:
+    name: Race
+    type: categorical
+    input: true
+    description: Racial/ethnic identification
+    domain: Demography
+    allowed:
+      - Non-Black, Non-Hispanic
+      - Hispanic
+      - Black
+
+  immigrant_status:
+    name: Immigrant Status
+    type: categorical
+    input: true
+    description: Immigration status
+    domain: Demography
+    allowed:
+      - Non-immigrant
+      - Immigrant
+
+  marital_status:
+    name: Marital Status
+    type: categorical
+    description: Marital status
+    domain: Marriage
+    allowed:
+      - Married
+      - Divorced/widowed
+      - Single
+
+  child_number:
+    name: Child Number
+    type: numeric
+    description: Number of children ever born
+    domain: Marriage
+    allowed:
+      min: 0
+      max: 12
+
+  age_first_marriage:
+    name: Age at First Marriage
+    type: numeric
+    description: Age at first marriage
+    domain: Marriage
+    allowed:
+      min: 12
+      max: 90
+
+  age_first_childbirth:
+    name: Age at First Childbirth
+    type: numeric
+    description: Age at first childbirth
+    domain: Marriage
+    allowed:
+      min: 12
+      max: 90
+
+  education:
+    name: Education
+    type: categorical
+    description: Educational attainment
+    domain: SES
+    allowed:
+      - Less than high school
+      - High school
+      - College and above
+
+  occupation:
+    name: Occupation
+    type: categorical
+    description: Occupation
+    domain: SES
+    allowed:
+      - Managerial Occupations
+      - Professional Specialty Occupations
+      - Technicians and Related Support Occupations
+      - Sales Occupations
+      - Clerical and Administrative Support Occupations
+      - Service Occupations
+      - Farming, Forestry, and Fishing Occupations
+      - Precision Production, Craft, and Repair Occupations
+      - Operators, Fabricators, and Laborers
+      - Military Occupations
+    drop_values:
+      - Unemployed
+
+
+  income:
+    name: Income
+    type: numeric
+    description: Total personal income last year
+    domain: SES
+    allowed:
+      min: 0
+      max: 75000
+
+  health_work_difficulty:
+    name: Health Work Difficulty
+    type: categorical
+    description: Whether respondents have any lasting physical or mental health condition that causes difficulty working
+    domain: Health
+    allowed:
+      - Health affects work
+      - Health doesn't affect work

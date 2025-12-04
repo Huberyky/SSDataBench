@@ -1,0 +1,207 @@
+real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-4_temp1.0_top1.0.csv"
+sim_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-4_temp1.0_top1.0.csv"
+out_dir: "./1111"
+
+bootstrap_B: 10
+alpha: 0.05
+bootstrap_sample_n: 500
+
+variables:
+  gender:
+    type: categorical
+    input: true
+    description: Sex
+    domain: Demography
+    allowed:
+      - female
+      - male
+
+  race:
+    type: categorical
+    input: true
+    description: ethnic or racial identity
+    domain: Demography
+    allowed:
+      - non-Hispanic white
+      - black
+      - native american
+      - asian
+      - hispanic
+      - others
+
+  siblings:
+    type: numeric
+    input: true
+    description: number of siblings
+    domain: Demography
+    allowed:
+      type: numeric
+      min: 0
+      max: 5
+      special:
+        - 6 or above
+
+  mother_edu:
+    type: categorical
+    input: true
+    description: Mother's education
+    domain: Demography
+    allowed:
+      - high school or below
+      - some college
+      - BA or above
+
+  father_edu:
+    type: categorical
+    input: true
+    description: Father's education
+    domain: Demography
+    allowed:
+      - high school or below
+      - some college
+      - BA or above
+
+  migrant:
+    type: categorical
+    input: true
+    description: Indicates whether the respondent was born in the United States
+    domain: Demography
+    allowed:
+      - born in U.S.
+      - immigrant
+            
+  ever_divorced:
+    name: Ever Divorced
+    type: categorical
+    description: Divorced or not lifetime
+    domain: Marriage
+    allowed:
+      - never divorced
+      - ever divorced
+
+  child_number:
+    name: Child Number
+    type: numeric
+    description: Number of children lifetime
+    domain: Marriage
+    allowed:
+      min: 0
+      max: 5
+        
+  age_at_first_sex:
+    type: numeric
+    description: Age at first sex
+    domain: Marriage
+
+  age_at_first_marriage:
+    name: Age at First Marriage
+    type: numeric
+    description: Age first got married
+    domain: Marriage
+    allowed:
+      min: 21
+      max: 78
+
+  occupation_30_40:
+    type: categorical
+    description: Main occupation between age 30 to 40
+    domain: SES
+    allowed:
+      - Legislators, senior officials and managers
+      - Professionals
+      - Technicians and associate professionals
+      - Clerks
+      - Service workers and shop and market sales workers
+      - Skilled agricultural and fishery workers
+      - Craft and related trades workers
+      - Plant and machine operators and assemblers
+      - Elementary occupations
+      - Armed forces
+    drop_values:
+      - unemployed
+      
+  mean_income_30_40:
+    type: numeric
+    description: Average personal annual income between age 30 to 40
+    domain: SES
+    allowed:
+      type: numeric
+      min: 0
+      max: 10299996
+
+
+  age_started_work:
+    name: Age Started Work
+    type: numeric
+    description: Age started work
+    domain: SES
+    allowed:
+      min: 10
+      max: 80
+
+  highest_education:
+    name: Highest Education
+    type: categorical
+    description: Highest level of education attained
+    domain: SES
+    allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+
+  self_rated_health:
+    name: Self-rated Health
+    type: categorical
+    description: Self-rated health status
+    domain: Health
+    allowed:
+      - excellent
+      - very good
+      - good
+      - fair
+      - poor
+
+  self_rated_depression:
+    name: Self-rated Depression
+    type: numeric
+    description: Self-rated depression, with higher scores indicating stronger depressive feelings
+    domain: Health
+    allowed:
+      min: -3
+      max: 6
+
+  political_orientation:
+    name: Political Orientation
+    type: categorical
+    description: Political ideology
+    domain: Attitudes
+    allowed:
+      - very conservative
+      - conservative
+      - middle-of-the-road
+      - liberal
+      - very liberal
+
+  hardwork:
+    name: Hard Work Belief
+    type: categorical
+    description: Belief about hard work
+    domain: Attitudes
+    allowed:
+      - strongly disagree
+      - disagree
+      - neither agree nor disagree
+      - agree
+      - strongly agree
+
+  interpersonal:
+    name: Interpersonal Interaction Frequency
+    type: categorical
+    description: Frequency of interpersonal interactions
+    domain: Attitudes
+    allowed:
+      - never
+      - few times
+      - once a week
+      - almost everyday

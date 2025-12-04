@@ -1,0 +1,197 @@
+# Content configuration with conditioning inputs.
+context: >
+  population of youth aged 14 to 21 as of December 31, 1978
+  (that is, born between 1957 and 1964), residing in the United
+  States on January 1, 1979.
+
+population_context:
+  reference_year: 1979
+  age_range: [14, 45]
+  region: United States
+
+input_variables:
+  gender:
+    type: static
+    description: Gender
+    domain: Demography
+    allowed:
+      - Female
+      - Male 
+
+  birth_year:
+    type: static
+    description: Birth Year
+    domain: Demography
+    allowed:
+      type: numeric
+      min: 1957
+      max: 1964
+
+  race:
+    type: static
+    description: Racial/ethnic Identification
+    domain: Demography
+    allowed: 
+      - Non-Black, Non-Hispanic
+      - Hispanic
+      - Black
+
+  immigrant_status:
+    type: static
+    description: Immigration Status
+    domain: Demography
+    allowed: 
+      - non-immigrant
+      - immigrant
+
+  mother_education:
+    type: static
+    description: Mother's highest education
+    domain: Demography
+    allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+  
+  father_education:
+    type: static
+    description: Father's highest education
+    domain: Demography
+    allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+
+
+output_variables:
+  marital_status:
+    type: sequential
+    description: Marital Status
+    domain: Marriage
+    allowed:
+      - Unmarried
+      - Married
+      - Divorced or Widowed
+
+  employment:
+    type: sequential
+    description: Current job status
+    domain: SES
+    allowed:
+      - Employed
+      - Unemployed
+
+  occupation:
+    type: sequential
+    description: occupation at current job/most recent job based on 10-classes ISCO major groups
+    domain: SES
+    allowed:
+      - Managers
+      - Professionals
+      - Technicians
+      - Clerical
+      - Service/Sales
+      - Agriculture
+      - Craft/Trades
+      - Machine Operators
+      - Elementary
+      - Military
+      - unemployed
+
+  children_number:
+    type: sequential
+    description: Number of child at current age
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 0
+      max: 11
+
+  education:
+    type: sequential
+    description: Highest level of education that respondent has completed and get credit for
+    domain: SES
+    allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+
+  income:
+    type: sequential
+    description: total personal income in past calendar year
+    domain: SES
+    allowed:
+      type: numeric
+      min: 0
+      max: 9999999
+    
+  physical_health:
+    type: static
+    description: SF-12 score of physical health summary score, higher score indicates higher level of physical health
+    domain: Health
+    allowed:
+      type: numeric
+      min: 1000
+      max: 7000
+
+  mental_health:
+    type: static
+    description: SF-12 score of mental health summary score, higher score indicates higher level of mental health
+    domain: Health
+    allowed:
+      type: numeric
+      min: 1
+      max: 8000
+
+  self_rated_general_health:
+    type: static
+    description: SF-12 general health
+    domain: Health
+    allowed:
+      - Excellent
+      - Very Good
+      - Good
+      - Fair
+      - Poor
+  self_rated_depression:
+    type: static
+    description: Self-rated depression based on CESD, higher score indicates higher level of depression
+    domain: Health
+    allowed:
+      type: numeric
+      min: 0
+      max: 24
+
+
+  self_rated_memory:
+    type: static
+    description: Self-rated memory, which is an indicator of cognitive skills
+    domain: Abilities
+    allowed:
+      - Excellent
+      - Very Good
+      - Good
+      - Fair
+      - Poor
+
+
+postprocess_modules:
+  - age_at_first_marriage
+  - ever_divorced
+  - age_at_first_child
+  - age_finished_education
+  - age_started_work
+  - child_number
+  - occupation_30_40
+  - mean_income_30_40
+  - highest_education
+  
+original_data:
+  source: "NLSY79"
+  description: >
+    National Longitudinal Survey of Youth 1979 cohort,
+    which samples U.S. residents aged 14–21 as of December 31, 1978.
+  file: "./real_data/dataset/nlsy79.csv"

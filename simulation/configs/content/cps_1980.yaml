@@ -1,0 +1,132 @@
+# Content configuration with conditioning inputs.
+context: >
+  non-institutionalized population in the United States in 1980.
+
+population_context:
+  reference_year: 1980
+
+
+input_variables:
+  birth_year:
+    type: static
+    description: Year of birth
+    domain: Demography
+    allowed:
+      type: numeric
+      min: 1881
+      max: 1980
+
+  age:
+    type: static
+    description: Age
+    domain: Demography
+    allowed:
+      type: numeric
+      min: 0
+      max: 99
+
+  gender:
+    type: static
+    description: Sex
+    domain: Demography
+    allowed:
+      - Female
+      - Male
+
+  race:
+    type: static
+    description: Racial/ethnic identification
+    domain: Demography
+    allowed: 
+      - Black
+      - Hispanic
+      - Non-Black, Non-Hispanic
+
+
+output_variables:
+  marital_status:
+    type: static
+    description: Marital status
+    domain: Marriage
+    allowed:
+      - Married
+      - Divorced/widowed
+      - Single
+  
+  child_number:
+    type: static
+    description: Number of Child ever born
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 0
+      max: 9
+
+  age_first_childbirth:
+    type: static
+    description: Age at first childbirth
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 12
+      max: 90
+      special:
+        - No Child
+
+  education:
+    type: static
+    description: Educational attainment
+    domain: SES
+    allowed:
+      - Less than high school
+      - High school
+      - College and above
+
+  laborforce:
+    type: static
+    description: Whether the respondent participated in the labor force
+    domain: SES
+    allowed:
+      - Not in the labor force
+      - In the labor force
+
+  occupation:
+    type: static
+    description: Occupation
+    domain: SES
+    allowed:
+      - Managerial Occupations
+      - Professional Specialty Occupations
+      - Technicians and Related Support Occupations
+      - Sales Occupations
+      - Clerical and Administrative Support Occupations
+      - Service Occupations
+      - Farming, Forestry, and Fishing Occupations
+      - Precision Production, Craft, and Repair Occupations
+      - Operators, Fabricators, and Laborers
+      - Military Occupations
+      - Unemployed
+
+  income:
+    type: static
+    description: Total personal income last year
+    domain: SES
+    allowed:
+      type: numeric
+      min: 0
+      max: 9999997
+
+  poverty_status:
+    type: static
+    description: Poverty status
+    domain: SES
+    allowed:
+      - Below poverty line
+      - Above poverty line
+
+
+original_data:
+  source: "CPA-ASEC1980"
+  description: >
+    CPS-ASEC in 1980, which is a nationally representative sample of non-institutionalized U.S. population of all age groups in 1980. 
+  file: "./real_data/dataset/cps1980.csv"

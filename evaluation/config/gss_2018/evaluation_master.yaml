@@ -1,0 +1,31 @@
+# =====================================================
+# MASTER EVALUATION CONFIG (Type 1–5 Controller)
+# =====================================================
+
+# === Global I/O Control ===
+
+real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-3.5-turbo_temp1.0_top1.0.csv"
+sim_csv:  "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0.csv"
+
+out_dir: "./evaluation_results"
+
+# === Types to Run ===
+types:
+  - type1
+  - type2
+  - type3
+  # - type4
+  # - type5
+
+# === Paths ===
+type_config_dir: "./evaluation/config/gss_2018/"
+type_code_dir: "./evaluation/code_by_type"
+
+# === Evaluation Settings ===
+bootstrap_B: 100
+alpha: 0.05
+bootstrap_sample_n: 500
+
+# === Aggregation Settings ===
+aggregate_method: "mean"      # average insignificance across all types
+save_summary: true

@@ -1,0 +1,28 @@
+real_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/data/simulated_1112/nlsy/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0/sampled_inputs_gpt-3.5-turbo_temp1.0_top1.0.csv"
+sim_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/data/simulated_1112/nlsy/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0.csv"
+
+out_dir: "./1112"
+# === Event Variables (chronological order test) ===
+event_variables:
+  # age_first_childbirth:
+  #   name: C
+  # age_first_marriage:
+  #   name: M
+  # age_completed_education:
+  #   name: E
+  # AGE1M:
+  #   name: M
+  #   value_map:
+  #     Never Married: inf
+  #     "": null
+  # age_at_first_birth:
+  #   name: B
+  #   value_map:
+  #     No Childbearing: inf
+  #     "": null
+
+# === Bootstrap Settings ===
+bootstrap_B: 10    # Number of bootstrap iterations
+alpha: 0.05              # Significance level (e.g., 0.05 → 95% CI)
+bootstrap_sample_ratio: null  # Sampling ratio per iteration (unused if sample_n is set)
+bootstrap_sample_n: 500        # Fixed sample size per bootstrap draw

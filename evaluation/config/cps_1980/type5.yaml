@@ -1,0 +1,126 @@
+real_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1112/acs_1980/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0/sampled_inputs_anthropic-claude-3.5-sonnet_temp1_top1.0.csv"
+sim_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1112/acs_1980/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0.csv"
+
+out_dir: "./1112"
+# === Event Variables ===
+event_variables:
+  # age_first_childbirth:
+  #   name: C
+  # age_first_marriage:
+  #   name: M
+# === Predictors (Covariates) ===
+# Used for all regressions.
+predictors:
+
+  age:
+    name: Age
+    type: numeric
+    input: true
+    description: Age
+    domain: Demography
+    allowed:
+      min: 0
+      max: 90
+
+  gender:
+    name: Gender
+    type: categorical
+    input: true
+    description: Sex
+    domain: Demography
+    allowed:
+      - Female
+      - Male
+
+  race:
+    name: Race
+    type: categorical
+    input: true
+    description: Racial/ethnic identification
+    domain: Demography
+    allowed:
+      - Non-Black, Non-Hispanic
+      - Hispanic
+      - Black
+
+  immigrant_status:
+    name: Immigrant Status
+    type: categorical
+    input: true
+    description: Immigration status
+    domain: Demography
+    allowed:
+      - Non-immigrant
+      - Immigrant
+
+  marital_status:
+    name: Marital Status
+    type: categorical
+    description: Marital status
+    domain: Marriage
+    allowed:
+      - Married
+      - Divorced/widowed
+      - Single
+  child_number:
+    name: Child Number
+    type: numeric
+    description: Number of children ever born
+    domain: Marriage
+    allowed:
+      min: 0
+      max: 12
+
+
+  education:
+    name: Education
+    type: categorical
+    description: Educational attainment
+    domain: SES
+    allowed:
+      - Less than high school
+      - High school
+      - College and above
+
+  occupation:
+    name: Occupation
+    type: categorical
+    description: Occupation
+    domain: SES
+    allowed:
+      - Managerial Occupations
+      - Professional Specialty Occupations
+      - Technicians and Related Support Occupations
+      - Sales Occupations
+      - Clerical and Administrative Support Occupations
+      - Service Occupations
+      - Farming, Forestry, and Fishing Occupations
+      - Precision Production, Craft, and Repair Occupations
+      - Operators, Fabricators, and Laborers
+      - Military Occupations
+  income:
+    name: Income
+    type: numeric
+    description: Total personal income last year
+    domain: SES
+    allowed:
+      min: 0
+      max: 75000
+
+  health_work_difficulty:
+    name: Health Work Difficulty
+    type: categorical
+    description: Whether respondents have any lasting physical or mental health condition that causes difficulty working
+    domain: Health
+    allowed:
+      - Health affects work
+      - Health doesn't affect work
+# === Interaction Terms ===
+# Whether to include all pairwise predictor interactions
+include_interactions: false
+
+# === Bootstrap Settings ===
+bootstrap_B: 10        # Number of bootstrap iterations
+alpha: 0.05              # Significance level (e.g., 0.05 → 95% CI)
+bootstrap_sample_ratio: null  # Sampling ratio per iteration (unused if sample_n is set)
+bootstrap_sample_n: 10000        # Fixed sample size per bootstrap draw

@@ -1,0 +1,116 @@
+# ================================================
+# LEVEL 3 — Bootstrap Regression Comparison Config
+# ================================================
+# Compare regression coefficients between real and simulated data
+# across multiple outcome variables and model types.
+# -----------------------------------------------
+
+# === Input Files ===
+real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-4_temp1.0_top1.0.csv"
+sim_csv:  "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-4_temp1.0_top1.0.csv"
+
+# === Output Directory ===
+out_dir: "./1111"
+
+# === Model Types ===
+# One model type per response variable.
+#   ols     → linear regression (continuous outcome)
+#   logit   → logistic regression (binary outcome)
+#   mnlogit → multinomial logistic regression (categorical outcome)
+model_type:
+  - ols
+  - ols
+  - ols
+  - ols
+# === Response Variables ===
+# Each variable can specify:
+#   name: friendly display name (used in plots or summaries)
+#   type: "numeric" or "categorical"
+#   value_map: optional dictionary to map labels to numbers
+#   drop_values: optional list of invalid values to exclude
+response:
+
+  age_first_marriage:
+    name: Age at First Marriage
+    type: numeric
+    description: Age at first marriage
+    domain: Marriage
+    allowed:
+      min: 12
+      max: 90
+
+  age_first_childbirth:
+    name: Age at First Childbirth
+    type: numeric
+    description: Age at first childbirth
+    domain: Marriage
+    allowed:
+      min: 12
+      max: 90
+
+  child_number:
+    name: Child Number
+    type: numeric
+    description: Number of children ever born
+    domain: Marriage
+    allowed:
+      min: 0
+      max: 12
+  income:
+    name: Income
+    type: numeric
+    description: Total personal income last year
+    domain: SES
+    allowed:
+      min: 0
+      max: 75000
+# === Predictors (Covariates) ===
+predictors:
+  age:
+    name: Age
+    type: numeric
+    input: true
+    description: Age
+    domain: Demography
+    allowed:
+      min: 0
+      max: 90
+
+  gender:
+    name: Gender
+    type: categorical
+    input: true
+    description: Sex
+    domain: Demography
+    allowed:
+      - Female
+      - Male
+
+  race:
+    name: Race
+    type: categorical
+    input: true
+    description: Racial/ethnic identification
+    domain: Demography
+    allowed:
+      - Non-Black, Non-Hispanic
+      - Hispanic
+      - Black
+  education:
+    name: Education
+    type: categorical
+    description: Educational attainment
+    domain: SES
+    allowed:
+      - Less than high school
+      - High school
+      - College and above
+
+# === Interaction Terms ===
+include_interactions: false
+
+# === Bootstrap Settings ===
+bootstrap_B: 10
+alpha: 0.05
+bootstrap_sample_ratio: null
+bootstrap_sample_n: 500
