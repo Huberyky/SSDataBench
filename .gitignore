@@ -5,11 +5,11 @@
 *.pyc
 *.out
 *.csv
-real_data/*
-!real_data/.gitkeep
-simulated_data/*
-!simulated_data/.gitkeep
-evaluation_results/*
-!evaluation_results/.gitkeep
-visualization_figures/*
-!visualization_figures/.gitkeep
+real_data/** */
+!real_data/
+simulated_data/**
+!simulated_data/
+evaluation_results/**
+!evaluation_results/
+visualization_figures/**
+!visualization_figures/

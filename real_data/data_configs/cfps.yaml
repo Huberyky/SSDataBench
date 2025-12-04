@@ -1,0 +1,408 @@
+# Content configuration with conditioning inputs.
+context: >
+  population of all age groups residing in China as of 2010.
+
+population_context:
+  reference_year: 2010
+  age_range: [0, 110]
+  region: China
+
+input_variables:
+  gender:
+    type: static
+    description: Sex
+    domain: Demography
+    allowed:
+      - Female
+      - Male
+
+  birth_year:
+    type: static
+    description: Birth Year
+    domain: Demography
+    allowed:
+      type: numeric
+      min: 1900
+      max: 2010
+
+  minzu:
+    type: static
+    description: ethnic or racial identity
+    domain: Demography
+    allowed:
+      - han
+      - minority
+  
+  sib_number:
+    type: static
+    description: number of siblings
+    domain: Demography
+    allowed:
+      type: numeric
+      min: 0
+      max: 5
+      special:
+      - 6 or above
+
+  mother_education:
+    type: static
+    description: Mother's education
+    domain: Demography
+    allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+
+  father_education:
+    type: static
+    description: Father's education
+    domain: Demography
+    allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+
+output_variables:
+  religion:
+    type: static
+    description: religious belief or affiliation
+    domain: Demography
+    allowed:
+      - Buddha or Bodhisattva
+      - Taoist deities
+      - Allah
+      - God (Catholic)
+      - God (Christian)
+      - Ancestors
+      - No religious belief
+
+  ever_married:
+    type: static
+    description: Marriage or not lifetime
+    domain: Marriage
+    allowed:
+      - never married
+      - ever married
+
+  marital_status:
+    type: sequential
+    description: marital status
+    domain: Marriage
+    allowed:
+      - cohabitation
+      - divorced
+      - married
+      - single
+      - widowed
+
+  ever_divorced:
+    type: static
+    description: Divorced or not lifetime
+    domain: Marriage
+    allowed:
+      - never divorced
+      - ever divorced
+
+  child_number:
+    type: static
+    description: Number of children lifetime
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 0
+      max: 5
+      special: 
+      - 6 or above
+
+  children_number:
+    type: sequential
+    description: Number of children
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 0
+      max: 5
+      special: 
+      - 6 or above
+  
+  age_at_first_marriage:
+    type: static
+    description: Age first got married
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 21
+      max: 78
+      special: 
+      - never married
+
+  age_at_first_divorce:
+    type: static
+    description: Age first got divorced
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 22
+      max: 68
+      special: 
+      - never divorced
+
+  age_at_first_child:
+    type: static
+    description: Age at first childbirth
+    domain: Marriage
+    allowed:
+      type: numeric
+      min: 21
+      max: 66
+      special: 
+      - never had child
+
+  age_finished_education:
+    type: static
+    description: Age finished education
+    domain: SES
+    allowed:
+      type: numeric
+      min: 6
+      max: 63
+
+  age_started_work:
+    type: static
+    description: Age started work
+    domain: SES
+    allowed:
+      type: numeric
+      min: 10
+      max: 80
+      special: 
+      - never worked
+
+  age_exited_work:
+    type: static
+    description: Age exited work
+    domain: SES
+    allowed:
+      type: numeric
+      min: 30
+      max: 99
+      special: 
+      - still working
+
+  self_rated_health:
+    type: static
+    description: Self-rated health status
+    domain: Health
+    allowed:
+      - very healthy
+      - fairly healthy
+      - somewhat unhealthy
+      - unhealthy
+      - very unhealthy
+
+  age_at_death:
+    type: static
+    description: Age at death
+    domain: Health
+    allowed:
+      type: numeric
+      min: 21
+      max: 117
+      special: 
+      - still alive
+
+  self_rated_depression:
+    type: static
+    description: Self-rated depression, with higher scores indicating stronger depressive feelings
+    domain: Health
+    allowed:
+      type: numeric
+      min: -18
+      max: 5
+
+  education:
+    type: sequential
+    description: Level of education attained
+    domain: SES
+    allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+
+  highest_education:
+    type: static
+    description: Highest level of education attained
+    domain: SES
+    allowed:
+      - primary school or below
+      - middle school
+      - high school
+      - college and above
+
+  occupation:
+    type: sequential
+    description: Occupation
+    domain: SES
+    allowed:
+      - Legislators, senior officials and managers
+      - Professionals
+      - Technicians and associate professionals
+      - Clerks
+      - Service workers and shop and market sales workers
+      - Skilled agricultural and fishery workers
+      - Craft and related trades workers
+      - Plant and machine operators and assemblers
+      - Elementary occupations
+      - Armed forces
+      - unemployed
+
+  first_occupation:
+    type: static
+    description: First occupation
+    domain: SES
+    allowed:
+      - Legislators, senior officials and managers
+      - Professionals
+      - Technicians and associate professionals
+      - Clerks
+      - Service workers and shop and market sales workers
+      - Skilled agricultural and fishery workers
+      - Craft and related trades workers
+      - Plant and machine operators and assemblers
+      - Elementary occupations
+      - Armed forces
+      - unemployed
+
+  occupation_30_40:
+    type: static
+    description: Main occupation between age 30 to 40
+    domain: SES
+    allowed:
+      - Legislators, senior officials and managers
+      - Professionals
+      - Technicians and associate professionals
+      - Clerks
+      - Service workers and shop and market sales workers
+      - Skilled agricultural and fishery workers
+      - Craft and related trades workers
+      - Plant and machine operators and assemblers
+      - Elementary occupations
+      - Armed forces
+      - unemployed
+      
+  income:
+    type: sequential
+    description: Personal annual income
+    domain: SES
+    allowed:
+      type: numeric
+      min: 0
+      max: 10299996
+
+  mean_income_30_40:
+    type: static
+    description: Average personal annual income between age 30 to 40
+    domain: SES
+    allowed:
+      type: numeric
+      min: 0
+      max: 10299996
+
+  employment:
+    type: sequential
+    description: Current job status
+    domain: SES
+    allowed:
+      - unemployed
+      - employed
+
+  gender_role:
+    type: static
+    description: Belief about traditional gender roles, where a higher score indicates stronger traditional gender norms and role differentiation.
+    domain: Attitude
+    allowed:
+      type: numeric
+      min: -3
+      max: 1
+
+  fixed_mindset:
+    type: static
+    description: Belief that intelligence and abilities are fixed and cannot be significantly changed; higher scores indicate stronger belief in fixed abilities.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 5
+
+  growth_mindset:
+    type: static
+    description: Belief that intelligence and abilities can be developed through effort and learning; higher scores indicate stronger belief in the malleability of ability.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 5
+
+  math_cognitive:
+    type: static
+    description: Mathematical reasoning and problem-solving ability; higher scores indicate stronger math proficiency and cognitive performance.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 0
+      max: 24
+
+  verbal_cognitive:
+    type: static
+    description: Verbal comprehension and language-based reasoning ability; higher scores indicate stronger verbal understanding and reasoning capacity.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 0
+      max: 34
+
+  self_control:
+    type: static
+    description: Ability to regulate one’s behavior, emotions, and impulses to achieve goals; higher scores indicate greater self-discipline and emotional regulation.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: -5
+      max: 3
+
+  interpersonal_skills:
+    type: static
+    description: Ability to interact effectively and harmoniously with others, rated by interviewers; higher scores indicate stronger social skills and interpersonal competence.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 7
+
+  comprehension:
+    type: static
+    description: Ability to understand and interpret information accurately, rated by interviewers; higher scores indicate better understanding and cognitive grasp of information.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 7
+
+  expression:
+    type: static
+    description: Ability to communicate thoughts and feelings clearly and effectively, rated by interviewers; higher scores indicate greater clarity, fluency, and expressiveness.
+    domain: Ability
+    allowed:
+      type: numeric
+      min: 1
+      max: 7
+
+original_data:
+  source: "CFPS"
+  description: >
+    National Longitudinal Survey of individuals from all ages group,
+    which samples Chinese residents as of 2010.
+  file: "cfps_2010_2022"
