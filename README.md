@@ -13,9 +13,14 @@ Our benchmark establishes a unified statistical testbed for quantifying populati
 
 1. Install dependencies.
 
-2. Create `.env` with your OpenAI key if you plan to regenerate simulations:
+  ```bash
+  pip install requirements.txt
+  ```
+
+2. Create `.env` with your API key if you plan to regenerate simulations:
 
    ```bash
+   # Use OpenRouter api
    echo "OPENROUTER_API_KEY=your_key" > .env
    # Or use OpenAI api
    echo "OPENAI_API_KEY=your_key" > .env
@@ -59,7 +64,7 @@ Environment overrides respected by all scripts: `NUM_PROFILES`, `MAX_WORKERS`, `
 
 ### Metrics
 - **Type1**: Single-variable distribution equivalence (bootstrap insignificance rate).
-- **Type2**: Pairwise association strength equivalence (categorical/numeric mixes; structure + strength).
+- **Type2**: Pairwise association strength equivalence (categorical/numeric mixes; strength).
 - **Type3**: Regression coefficient stability (OLS/Logit/MNLogit, bootstrap).
 - **Type4**: Event order distribution similarity (life-course sequencing).
 - **Type5**: Event order regression stability.
@@ -96,18 +101,18 @@ Flags accepted by `visualization/overview.py` (passed through by the script):
 - `--root` (positional via the shell script) sets the evaluation results root. Default `evaluation_results`.
 - `--single` treats `--root` as a single run/dataset folder instead of scanning subfolders.
 
-### Strength vs structure (Types 2/3/5)
+### Strength (Types 2/3/5)
 ```bash
 # All datasets under the root
-bash scripts/visualization/run_structure_vs_strength.sh
+bash scripts/visualization/run_strength.sh
 
 # Single dataset folder (no subfolder scan)
-bash scripts/visualization/run_structure_vs_strength.sh evaluation_results/nlsy --single
+bash scripts/visualization/run_strength.sh evaluation_results/nlsy --single
 
 # Limit to specific datasets (comma-separated) in batch mode
-bash scripts/visualization/run_structure_vs_strength.sh --datasets nlsy,acs_1980
+bash scripts/visualization/run_strength.sh --datasets nlsy,acs_1980
 ```
-Flags accepted by `visualization/structure_vs_strength.py`:
+Flags accepted by `visualization/strength.py`:
 - `--root` (positional via the shell script) sets the evaluation results root. Default `evaluation_results`.
 - `--datasets` to limit which dataset subfolders are scanned (batch mode only).
 - `--single` treats `--root` as one run/dataset folder.

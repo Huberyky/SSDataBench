@@ -1,5 +1,5 @@
 #!/bin/bash
-# Plot strength vs. structure comparisons for types 2/3/5.
+# Plot strength comparisons for types 2/3/5 (structure disabled).
 # Optionally set VIS_ROOT_DIR to point at your evaluation results root.
 
 set -euo pipefail
@@ -13,4 +13,4 @@ if [[ $# -gt 0 && $1 != --* ]]; then
   shift
 fi
 
-python "$PROJECT_ROOT/visualization/structure_vs_strength.py" --root "$ROOT_DIR" "$@"
+python "$PROJECT_ROOT/visualization/strength.py" --root "$ROOT_DIR" "$@"

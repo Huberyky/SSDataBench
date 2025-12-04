@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Strength vs. structure comparison for Types 2, 3, and 5.
+Strength-only comparison for Types 2, 3, and 5.
 Reads summary_type*.csv files and plots mean ± std of pass rates across datasets.
+Structure-related plotting has been commented out for now.
 """
 
 import argparse
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -88,7 +89,7 @@ def process_type(type_id: int, datasets: List[str], root_dir: Path) -> pd.DataFr
                         "model": ds,
                         "dataset": ds,
                         "strength": rates["strength"],
-                        "structure": rates["structure"],
+                        # "structure": rates["structure"],  # structure plotting temporarily disabled
                     }
                 )
 
@@ -104,7 +105,7 @@ def process_type(type_id: int, datasets: List[str], root_dir: Path) -> pd.DataFr
                     "model": normalize_model_name(model_dir_name),
                     "dataset": ds,
                     "strength": rates["strength"],
-                    "structure": rates["structure"],
+                    # "structure": rates["structure"],  # structure plotting temporarily disabled
                 }
             )
     return pd.DataFrame(records)
@@ -119,30 +120,30 @@ def plot(df: pd.DataFrame, type_id: int, out_dir: Path):
     plot_records: List[Dict] = []
     for model in models:
         s_vals = [v for v in df[df["model"] == model]["strength"] if not np.isnan(v)]
-        t_vals = [v for v in df[df["model"] == model]["structure"] if not np.isnan(v)]
+        # t_vals = [v for v in df[df["model"] == model]["structure"] if not np.isnan(v)]  # structure disabled
         s_mean = np.mean(s_vals) if s_vals else np.nan
-        t_mean = np.mean(t_vals) if t_vals else np.nan
+        # t_mean = np.mean(t_vals) if t_vals else np.nan  # structure disabled
         s_std = np.std(s_vals) if s_vals else np.nan
-        t_std = np.std(t_vals) if t_vals else np.nan
+        # t_std = np.std(t_vals) if t_vals else np.nan  # structure disabled
         plot_records.append(
             {
                 "model": model,
                 "strength_mean": s_mean,
                 "strength_std": s_std,
-                "structure_mean": t_mean,
-                "structure_std": t_std,
+                # "structure_mean": t_mean,  # structure disabled
+                # "structure_std": t_std,  # structure disabled
             }
         )
     df_plot = pd.DataFrame(plot_records).sort_values("model").reset_index(drop=True)
 
     plt.figure(figsize=(12, 6))
     x = np.arange(len(df_plot))
-    offset = 0.15
+    # offset = 0.15  # structure disabled
     strength_color = "#ED9B82"
-    structure_color = "#9C89B8"
+    # structure_color = "#9C89B8"  # structure disabled
 
     plt.errorbar(
-        x - offset,
+        x,
         df_plot["strength_mean"],
         yerr=df_plot["strength_std"],
         fmt="o",
@@ -151,20 +152,10 @@ def plot(df: pd.DataFrame, type_id: int, out_dir: Path):
         color=strength_color,
         label="Strength",
     )
-    plt.errorbar(
-        x + offset,
-        df_plot["structure_mean"],
-        yerr=df_plot["structure_std"],
-        fmt="s",
-        markersize=8,
-        capsize=4,
-        color=structure_color,
-        label="Structure",
-    )
 
     plt.xticks(x, df_plot["model"], rotation=45, ha="right")
     plt.ylabel("Pass Rate", fontsize=14)
-    plt.title(f"Type {type_id}: Association Strength vs Structure (Mean ± Std)", fontsize=16)
+    plt.title(f"Type {type_id}: Association Strength (Mean ± Std)", fontsize=16)
     plt.ylim(0, 1)
     plt.grid(True, linestyle="--", alpha=0.3)
     plt.legend(fontsize=12)
@@ -179,7 +170,7 @@ def plot(df: pd.DataFrame, type_id: int, out_dir: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Strength vs. structure plots for types 2/3/5.")
+    parser = argparse.ArgumentParser(description="Strength-only plots for types 2/3/5 (structure disabled).")
     parser.add_argument("--root", type=Path, default=Path("evaluation_results"), help="Root directory of evaluation outputs.")
     parser.add_argument("--datasets", type=str, default=os.getenv("VIS_DATASETS", ""), help="Comma-separated dataset names to include.")
     parser.add_argument("--single", action="store_true", help="Treat root as a single run folder (dataset name = folder name).")

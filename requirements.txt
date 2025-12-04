@@ -1,0 +1,9 @@
+matplotlib
+numpy
+openai
+pandas
+python-dotenv
+PyYAML
+scipy
+seaborn
+statsmodels
