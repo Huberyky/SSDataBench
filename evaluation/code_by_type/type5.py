@@ -155,83 +155,6 @@ def plot_cramers_v_one_to_many(df_pairs, out_dir, core_var, var_name_map=None, n
     plt.savefig(out_path, dpi=300)
     plt.close()
     print(f"📊 Cramér’s V (one-to-many) plot saved → {out_path}")
-def _test_equal_assoc_cat_cat_structure(df, v1, v2, group_col="__grp__"):
-    """Log-linear LRT: test A:B:Group 3-way interaction = 0"""
-    ct = (df.groupby([v1, v2, group_col]).size().reset_index(name="count"))
-    if ct.empty:
-        return np.nan
-
-    eff_by_group = (
-        ct.groupby(group_col)["count"]
-        .apply(lambda x: (x > 0).sum())
-        .to_dict()
-    )
-
-    if len(eff_by_group) < 2:
-        return 0.0
-
-    eff_values = list(eff_by_group.values())
-    min_eff = min(eff_values)
-    max_eff = max(eff_values)
-
-    if min_eff <= 0.5 * max_eff:
-        # print(f"[STRUCTURE FAIL] effective cell sizes {eff_by_group}")
-        return 0.0  
-
-    try:
-        full = smf.glm(
-            f"count ~ C({v1})*C({v2})*C({group_col})",
-            data=ct, family=sm.families.Poisson()
-        ).fit()
-
-        redu = smf.glm(
-            f"count ~ C({v1})*C({v2}) + C({v1})*C({group_col}) + C({v2})*C({group_col})",
-            data=ct, family=sm.families.Poisson()
-        ).fit()
-
-        LR = redu.deviance - full.deviance
-        df_diff = max(1, redu.df_resid - full.df_resid)
-        return 1 - chi2.cdf(LR, df_diff)
-
-    except Exception:
-        return np.nan
-def _test_equal_assoc_num_cat_structure(num1, cat1, num2, cat2):
-    """Two-way ANOVA: test Group × Category interaction, with effective-cell check."""
-    df = pd.DataFrame({
-        "num": np.concatenate([num1, num2]),
-        "cat": np.concatenate([cat1, cat2]),
-        "grp": np.array([0]*len(num1) + [1]*len(num2))
-    }).dropna()
-
-    if df["cat"].nunique() < 2 or df["grp"].nunique() < 2:
-        return np.nan
-
-    eff_by_group = (
-        df.groupby("grp")["cat"]
-        .apply(lambda x: x.value_counts().gt(0).sum())
-        .to_dict()
-    )
-
-    if len(eff_by_group) < 2:
-        return 0.0
-
-    eff_values = list(eff_by_group.values())
-    min_eff = min(eff_values)
-    max_eff = max(eff_values)
-
-    if min_eff <= 0.5 * max_eff:
-        # print(f"[STRUCTURE FAIL] num-cat: effective cells {eff_by_group}")
-        return 0.0
-    try:
-        model = smf.ols("num ~ C(cat)*C(grp)", data=df).fit()
-        anova = sm.stats.anova_lm(model, typ=2)
-        if "C(cat):C(grp)" in anova.index:
-            return float(anova.loc["C(cat):C(grp)", "PR(>F)"])
-        return np.nan
-
-    except Exception:
-        return np.nan
-    
 def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
     """
     Delta-method z-test comparing η² (eta squared) effect sizes between
@@ -328,7 +251,7 @@ def _test_equal_assoc_cat_cat_strength(df, v1, v2, group_col="__grp__"):
 # ---------- Bootstrap ----------
 def _bootstrap_assoc_significance(df_real, df_sim, event_order_col, pred, pred_cfg,
                                   B, alpha, sample_n, ratio,
-                                  rng=None, id_col="profile_id", mode="strength"):
+                                  rng=None, id_col="profile_id"):
     """
     Bootstrap test for equal association between event_order (categorical)
     and a predictor (categorical or numeric), comparing REAL vs SIMULATED.
@@ -385,25 +308,12 @@ def _bootstrap_assoc_significance(df_real, df_sim, event_order_col, pred, pred_c
             # print(len(rb),len(sb))
             if pred_type == "categorical":
                 tmp = pd.concat([rb.assign(__grp__=0), sb.assign(__grp__=1)], axis=0)
-                if mode == "structure":
-                    p = _test_equal_assoc_cat_cat_structure(tmp, event_order_col, pred, "__grp__")
-                else:
-                    p = _test_equal_assoc_cat_cat_strength(tmp, event_order_col, pred, "__grp__")
-                    # print(p)
+                p = _test_equal_assoc_cat_cat_strength(tmp, event_order_col, pred, "__grp__")
             else:
-                # numerical predictor
-                if mode == "structure":
-                    p = _test_equal_assoc_num_cat_structure(
-                        rb[pred].values, rb[event_order_col].astype(str).values,
-                        sb[pred].values, sb[event_order_col].astype(str).values
-                    )
-                    
-                else:
-                    p = _test_equal_assoc_num_cat_strength(
-                        rb[pred].values, rb[event_order_col].astype(str).values,
-                        sb[pred].values, sb[event_order_col].astype(str).values
-                    )
-                    # print(p)
+                p = _test_equal_assoc_num_cat_strength(
+                    rb[pred].values, rb[event_order_col].astype(str).values,
+                    sb[pred].values, sb[event_order_col].astype(str).values
+                )
             if np.isnan(p):
                 pvals.append(0)
             else:
@@ -548,8 +458,7 @@ def run_type5_eval(
                     alpha=cfg.get("alpha", 0.05),
                     sample_n=cfg.get("bootstrap_sample_n"),
                     ratio=cfg.get("bootstrap_sample_ratio", 1.0),
-                    id_col="profile_id",
-                    mode=mode        
+                    id_col="profile_id"
                 )
                 if res is not None:
                     res["combo"] = "→".join(combo)
@@ -635,9 +544,9 @@ def run_type5_eval(
         }
 
     # =======================================================
-    # === Step 3: Merge both summaries into one CSV
+    # === Aggregate strength summary into one CSV
     # =======================================================
-    print("\n📊 Merging strength & structure summaries...")
+    print("\n📊 Aggregating strength summary...")
 
     merged_all = []
     for mode, res in results_all.items():
@@ -646,45 +555,41 @@ def run_type5_eval(
             df_sum["mode"] = mode
         merged_all.append(df_sum)
 
-    if merged_all:
-        merged = pd.concat(merged_all, ignore_index=True)
+    merged = pd.concat(merged_all, ignore_index=True) if merged_all else pd.DataFrame()
 
-        # === mode-wise average ===
-        mode_avg_rows = []
-        for mode in ["strength", "structure"]:
-            sub = merged[merged["mode"] == mode]
-            if not sub.empty and "insignificant_rate" in sub.columns:
-                avg_val = np.nanmean(sub["insignificant_rate"])
-                avg_row = {c: "" for c in merged.columns}
-                avg_row["key"] = f"avg_{mode}"
-                avg_row["mode"] = mode
-                avg_row["insignificant_rate"] = avg_val
-                mode_avg_rows.append(avg_row)
+    avg_rows = []
+    if not merged.empty and "insignificant_rate" in merged.columns:
+        strength_avg = np.nanmean(merged["insignificant_rate"])
+        avg_row = {c: "" for c in merged.columns}
+        avg_row["key"] = "avg_strength"
+        avg_row["mode"] = "strength"
+        avg_row["insignificant_rate"] = strength_avg
+        avg_rows.append(avg_row)
 
-        # === overall avg ===
-        all_avg = np.nanmean([r["insignificant_rate"] for r in mode_avg_rows])
         overall_row = {c: "" for c in merged.columns}
         overall_row["key"] = "avg"
         overall_row["mode"] = "all"
-        overall_row["insignificant_rate"] = all_avg
-        mode_avg_rows.append(overall_row)
+        overall_row["insignificant_rate"] = strength_avg
+        avg_rows.append(overall_row)
+    else:
+        strength_avg = np.nan
 
-        merged = pd.concat([merged, pd.DataFrame(mode_avg_rows)], ignore_index=True)
-        merged_path = os.path.join(out_dir, "summary_type5.csv")
-        merged.to_csv(merged_path, index=False)
+    if avg_rows:
+        merged = pd.concat([merged, pd.DataFrame(avg_rows)], ignore_index=True)
 
-        print(f"✅ Saved merged summary → {merged_path}")
-        print(f"  strength avg = {mode_avg_rows[0]['insignificant_rate']:.3f}")
-        print(f"  structure avg = {mode_avg_rows[1]['insignificant_rate']:.3f}")
-        print(f"  overall avg   = {all_avg:.3f}\n")
+    merged_path = os.path.join(out_dir, "summary_type5.csv")
+    merged.to_csv(merged_path, index=False)
 
-        return {
-            "avg_structure": mode_avg_rows[1]["insignificant_rate"],
-            "avg_strength": mode_avg_rows[0]["insignificant_rate"],
-            "avg_insignificant_rate": all_avg,
-            "summary_path": merged_path,
-            "summary_df": merged
-        }
+    print(f"✅ Saved merged summary → {merged_path}")
+    if not np.isnan(strength_avg):
+        print(f"  strength avg = {strength_avg:.3f}\n")
+
+    return {
+        "avg_strength": strength_avg,
+        "avg_insignificant_rate": strength_avg,
+        "summary_path": merged_path,
+        "summary_df": merged
+    }
 
 
 if __name__ == "__main__":

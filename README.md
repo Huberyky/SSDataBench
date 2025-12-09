@@ -64,8 +64,8 @@ Environment overrides respected by all scripts: `NUM_PROFILES`, `MAX_WORKERS`, `
 
 ### Metrics
 - **Type1**: Single-variable distribution equivalence (bootstrap insignificance rate).
-- **Type2**: Pairwise association strength equivalence (categorical/numeric mixes; strength).
-- **Type3**: Regression coefficient stability (OLS/Logit/MNLogit, bootstrap).
+- **Type2**: Pairwise association strength equivalence (categorical/numeric mixes; structure checks disabled).
+- **Type3**: Regression coefficient stability (OLS/Logit/MNLogit, strength bootstrap).
 - **Type4**: Event order distribution similarity (life-course sequencing).
 - **Type5**: Event order regression stability.
 

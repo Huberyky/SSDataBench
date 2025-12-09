@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 type2_.py — Compare REAL vs. SIMULATED pairwise associations
-via bootstrap significance tests for both STRENGTH and STRUCTURE.
+via bootstrap significance tests for STRENGTH only.
 
 ----------------------------------------------------------------------
 Association patterns supported:
@@ -10,15 +10,8 @@ Association patterns supported:
   • numerical × numerical
   • numerical × categorical
 
-Each has:
-  • "strength" mode → measures effect magnitude equivalence
-  • "structure" mode → measures pattern equivalence
-----------------------------------------------------------------------
-
-Outputs:
-  summary_type2_strength.csv
-  summary_type2_structure.csv
-  (each with avg row)
+Output:
+  summary_type2_strength.csv (plus merged summary_type2.csv)
 """
 import os, math, argparse, json, warnings
 import numpy as np, pandas as pd
@@ -48,7 +41,7 @@ def plot_numeric_correlations(df_real, df_sim, cfg, summary, out_dir):
         print("ℹ️ Not enough numeric variables to draw correlation plots.")
         return
 
-    print("\n📈 Drawing numeric × numeric correlation scatter plots (structure + strength)...")
+    print("\n📈 Drawing numeric × numeric correlation scatter plots...")
     corr_dir = os.path.join(out_dir, "Figures_type2", "NumNum")
     os.makedirs(corr_dir, exist_ok=True)
 
@@ -109,8 +102,6 @@ def plot_numeric_correlations(df_real, df_sim, cfg, summary, out_dir):
             if not np.isnan(r_sim):
                 text_lines.append(f"r(Sim) = {r_sim:.2f}")
 
-            if "structure" in rates and not np.isnan(rates["structure"]):
-                text_lines.append(f"Structure = {rates['structure']:.2f}")
             if "strength" in rates and not np.isnan(rates["strength"]):
                 text_lines.append(f"Strength = {rates['strength']:.2f}")
             if "single" in rates and not np.isnan(rates["single"]):
@@ -330,116 +321,7 @@ def _get_sizes(n1, n2, sample_n=None, ratio=1.0):
 
 
 # ============================================================
-# === 2. Association Tests: STRUCTURE
-# ============================================================
-
-def _test_equal_assoc_cat_cat_structure(df, v1, v2, group_col="__grp__"):
-    """Log-linear LRT: test A:B:Group 3-way interaction = 0"""
-    ct = (df.groupby([v1, v2, group_col]).size().reset_index(name="count"))
-    if ct.empty:
-        return np.nan
-
-    eff_by_group = (
-        ct[ct["count"] > 0]
-        .groupby(group_col)
-        .size()
-        .to_dict()
-    )
-
-    if len(eff_by_group) < 2:
-        return 0.0
-
-    eff_vals = list(eff_by_group.values())
-    min_eff = min(eff_vals)
-    max_eff = max(eff_vals)
-
-    if min_eff <= 0.5 * max_eff:
-        print(f"[STRUCTURE FAIL] Effective cells: {eff_by_group}")
-        return 0.0
-
-    try:
-        full = smf.glm(
-            f"count ~ C({v1})*C({v2})*C({group_col})",
-            data=ct, family=sm.families.Poisson()
-        ).fit()
-
-        redu = smf.glm(
-            f"count ~ C({v1})*C({v2}) + C({v1})*C({group_col}) + C({v2})*C({group_col})",
-            data=ct, family=sm.families.Poisson()
-        ).fit()
-
-        LR = redu.deviance - full.deviance
-        df_diff = max(1, redu.df_resid - full.df_resid)
-        return 1 - chi2.cdf(LR, df_diff)
-
-    except Exception:
-        return np.nan
-
-def _test_equal_assoc_num_num_structure(x1, y1, x2, y2):
-    """
-    Regression interaction test: H0: β_{X:G}=0
-    Structure comparison for Numerical × Numerical.
-    """
-    if len(x1) < 4 or len(x2) < 4:
-        return np.nan
-    df = pd.DataFrame({
-        "X": np.concatenate([x1, x2]),
-        "Y": np.concatenate([y1, y2]),
-        "G": np.array([0]*len(x1) + [1]*len(x2))
-    }).dropna()
-    if df["G"].nunique() < 2:
-        return np.nan
-    try:
-        model = smf.ols("Y ~ X * C(G)", data=df).fit()
-        term = "X:C(G)[T.1]"
-        if term in model.pvalues:
-            return float(model.pvalues[term])
-        anova = sm.stats.anova_lm(model, typ=2)
-        if "X:C(G)" in anova.index:
-            return float(anova.loc["X:C(G)", "PR(>F)"])
-        return np.nan
-    except Exception:
-        return np.nan
-
-def _test_equal_assoc_num_cat_structure(num1, cat1, num2, cat2):
-    """Two-way ANOVA: test Group × Category interaction, with structure collapse check."""
-    df = pd.DataFrame({
-        "num": np.concatenate([num1, num2]),
-        "cat": np.concatenate([cat1, cat2]),
-        "grp": np.array([0]*len(num1) + [1]*len(num2))
-    }).dropna()
-
-    if df["cat"].nunique() < 2 or df["grp"].nunique() < 2:
-        return np.nan
-
-    eff_by_group = (
-        df.groupby("grp")["cat"]
-        .apply(lambda x: x.nunique())
-        .to_dict()
-    )
-
-    if len(eff_by_group) == 2:
-        eff_values = list(eff_by_group.values())
-        min_eff = min(eff_values)
-        max_eff = max(eff_values)
-
-        if min_eff <= 0.5 * max_eff:
-            return 0.0
-
-    try:
-        model = smf.ols("num ~ C(cat)*C(grp)", data=df).fit()
-        anova = sm.stats.anova_lm(model, typ=2)
-
-        if "C(cat):C(grp)" in anova.index:
-            return float(anova.loc["C(cat):C(grp)", "PR(>F)"])
-        return np.nan
-
-    except Exception:
-        return np.nan
-    
-
-# ============================================================
-# === 3. Association Tests: STRENGTH (placeholders for now)
+# === 2. Association Tests: STRENGTH
 # ============================================================
 
 def _test_equal_assoc_cat_cat_strength(df, v1, v2, group_col="__grp__"):
@@ -505,98 +387,6 @@ def _test_equal_assoc_num_num_strength(x1, y1, x2, y2):
     se = np.sqrt(1 / (len(x1) - 3) + 1 / (len(x2) - 3))
     z = (z1 - z2) / se
     return 2 * norm.sf(abs(z))
-def plot_categorical_numeric(df_real, df_sim, cfg, summary, out_dir):
-    """Box plots for categorical × numeric pairs showing structure/strength pass rates."""
-    cat_vars = [v for v, vcfg in cfg["variables"].items()
-                if (vcfg.get("type") or "").lower() == "categorical"]
-    num_vars = [v for v, vcfg in cfg["variables"].items()
-                if (vcfg.get("type") or "").lower() == "numeric"]
-
-    if len(cat_vars) == 0 or len(num_vars) == 0:
-        print("ℹ️ No categorical × numeric variable combinations available.")
-        return
-
-    print("\n🎨 Drawing categorical × numeric distribution plots (structure + strength)...")
-    mix_dir = os.path.join(out_dir, "Figures_type2", "CatNum")
-    os.makedirs(mix_dir, exist_ok=True)
-
-    rate_map = {}
-    if "mode" in summary.columns:
-        for _, row in summary.iterrows():
-            key = frozenset([row["var1"], row["var2"]])
-            mode = str(row.get("mode", "")).lower()
-            val = row.get("insignificant_rate", np.nan)
-            if key not in rate_map:
-                rate_map[key] = {}
-            rate_map[key][mode] = val
-    else:
-        # fallback for single-mode results
-        rate_map = {frozenset([r["var1"], r["var2"]]): {"single": r["insignificant_rate"]}
-                    for _, r in summary.iterrows()}
-
-    palette = {"Real": "#4C72B0", "Simulated": "#DD8452"}
-
-    for cat in cat_vars:
-        for num in num_vars:
-            name_cat = cfg["variables"][cat].get("name", cat)
-            name_num = cfg["variables"][num].get("name", num)
-            rates = rate_map.get(frozenset([cat, num]), {})
-
-            df_r = df_real[[cat, num]].copy()
-            df_r["source"] = "Real"
-            df_s = df_sim[[cat, num]].copy()
-            df_s["source"] = "Simulated"
-            df_comb = pd.concat([df_r, df_s], axis=0, ignore_index=True)
-            df_comb = df_comb.dropna(subset=[cat, num])
-
-            plt.figure(figsize=(5, 4))
-            sns.boxplot(
-                data=df_comb,
-                x=cat,
-                y=num,
-                hue="source",
-                palette=palette,
-                width=0.6,
-                fliersize=2,
-                boxprops=dict(alpha=0.45),
-                linewidth=1.2
-            )
-
-            plt.xlabel(name_cat, fontsize=10)
-            plt.ylabel(name_num, fontsize=10)
-            plt.title(f"{name_num} by {name_cat}", fontsize=10)
-            plt.xticks(rotation=30, ha='right')
-            plt.legend(title="", frameon=False, fontsize=8)
-            plt.grid(True, axis="y", linestyle="--", alpha=0.4)
-
-            ax = plt.gca()
-            text_lines = []
-            if "structure" in rates and not np.isnan(rates["structure"]):
-                text_lines.append(f"Structure = {rates['structure']:.2f}")
-            if "strength" in rates and not np.isnan(rates["strength"]):
-                text_lines.append(f"Strength = {rates['strength']:.2f}")
-            if "single" in rates and not np.isnan(rates["single"]):
-                text_lines.append(f"Pass Rate = {rates['single']:.2f}")
-
-            if text_lines:
-                plt.text(
-                    0.98, 0.95, "\n".join(text_lines),
-                    transform=ax.transAxes,
-                    ha="right", va="top",
-                    fontsize=9, color="gray",
-                    bbox=dict(facecolor="white", edgecolor="none",
-                              alpha=0.7, boxstyle="round,pad=0.2")
-                )
-
-            sns.despine()
-            plt.tight_layout()
-            out_path = os.path.join(mix_dir, f"catnum_{cat}_{num}.png")
-            plt.savefig(out_path, dpi=300)
-            out_path = os.path.join(mix_dir, f"catnum_{cat}_{num}.pdf")
-            plt.savefig(out_path, dpi=300)
-            plt.close()
-
-    print(f"✅ Saved categorical × numeric boxplots → {mix_dir}")
 def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
     """
     Delta-method z-test comparing η² (eta squared) effect sizes between
@@ -645,8 +435,8 @@ def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
 # ============================================================
 def _bootstrap_assoc_significance(df_real, df_sim, v1, v2, cfg1, cfg2,
                                   B, alpha, sample_n, ratio, rng=None,
-                                  id_col="profile_id", mode="strength"):
-    """Bootstrap testing under selected mode."""
+                                  id_col="profile_id"):
+    """Bootstrap testing under strength mode."""
     if rng is None:
         rng = np.random.default_rng()
     if id_col not in df_real.columns or id_col not in df_sim.columns:
@@ -685,30 +475,17 @@ def _bootstrap_assoc_significance(df_real, df_sim, v1, v2, cfg1, cfg2,
         # print(len(rb),len(sb))
         if t1 == "categorical" and t2 == "categorical":
             tmp = pd.concat([rb.assign(__grp__=0), sb.assign(__grp__=1)], axis=0)
-            if mode == "structure":
-                p = _test_equal_assoc_cat_cat_structure(tmp, v1, v2, "__grp__")
-            else:
-                p = _test_equal_assoc_cat_cat_strength(tmp, v1, v2, "__grp__")
+            p = _test_equal_assoc_cat_cat_strength(tmp, v1, v2, "__grp__")
         elif t1 == "numeric" and t2 == "numeric":
-            if mode == "structure":
-                p = _test_equal_assoc_num_num_structure(
-                    rb[v1].values, rb[v2].values,
-                    sb[v1].values, sb[v2].values)
-            else:
-                p = _test_equal_assoc_num_num_strength(
-                    rb[v1].values, rb[v2].values,
-                    sb[v1].values, sb[v2].values)
+            p = _test_equal_assoc_num_num_strength(
+                rb[v1].values, rb[v2].values,
+                sb[v1].values, sb[v2].values)
         else:
             num = v1 if t1=="numeric" else v2
             cat = v2 if t1=="numeric" else v1
-            if mode == "structure":
-                p = _test_equal_assoc_num_cat_structure(
-                    rb[num].values, rb[cat].values,
-                    sb[num].values, sb[cat].values)
-            else:
-                p = _test_equal_assoc_num_cat_strength(
-                    rb[num].values, rb[cat].values,
-                    sb[num].values, sb[cat].values)
+            p = _test_equal_assoc_num_cat_strength(
+                rb[num].values, rb[cat].values,
+                sb[num].values, sb[cat].values)
 
         if not np.isnan(p) and p > alpha:
             wins += 1
@@ -721,8 +498,8 @@ def _bootstrap_assoc_significance(df_real, df_sim, v1, v2, cfg1, cfg2,
 # ============================================================
 def run_type2_eval_one(config, real_csv, sim_csv, out_dir,
                    bootstrap_B=1000, bootstrap_sample_n=500,
-                   alpha=0.05, ratio=1.0, mode="strength", verbose=True):
-    """Run Type2 evaluation under one mode (strength or structure)."""
+                   alpha=0.05, ratio=1.0, verbose=True):
+    """Run Type2 evaluation under strength mode."""
     df_real = pd.read_csv(real_csv, low_memory=False)
     df_sim  = pd.read_csv(sim_csv,  low_memory=False)
     os.makedirs(out_dir, exist_ok=True)
@@ -731,7 +508,7 @@ def run_type2_eval_one(config, real_csv, sim_csv, out_dir,
     rng = np.random.default_rng()
     results = []
     var_list = list(config["variables"].keys())
-    print(f"\n================ TYPE2 {mode.upper()} TESTS ================")
+    print(f"\n================ TYPE2 STRENGTH TESTS ================")
     print(f"Bootstrap {B} iterations | α={alpha}\n")
 
     for i in range(len(var_list)):
@@ -740,19 +517,19 @@ def run_type2_eval_one(config, real_csv, sim_csv, out_dir,
             cfg1, cfg2 = config["variables"][v1], config["variables"][v2]
             res = _bootstrap_assoc_significance(
                 df_real, df_sim, v1, v2, cfg1, cfg2,
-                B, alpha, bootstrap_sample_n, ratio, rng, mode=mode)
+                B, alpha, bootstrap_sample_n, ratio, rng)
             if res is not None:
                 results.append(res)
                 if verbose:
                     print(f"{v1} × {v2}: rate={res['insignificant_rate']:.3f}")
 
     summary = pd.DataFrame(results)
-    summary_path = os.path.join(out_dir, f"summary_type2_{mode}.csv")
+    summary_path = os.path.join(out_dir, "summary_type2_strength.csv")
     summary.to_csv(summary_path, index=False)
-    print(f"✅ Saved {mode} summary → {summary_path}")
+    print(f"✅ Saved strength summary → {summary_path}")
     if "insignificant_rate" in summary.columns:
         overall = np.nanmean(summary["insignificant_rate"])
-        print(f"Average Insignificant Rate ({mode}) = {overall:.3f}")
+        print(f"Average Insignificant Rate (strength) = {overall:.3f}")
     else:
         overall = np.nan
     return {"avg_insignificant_rate": overall, "summary_path": summary_path, "summary_df": summary}
@@ -762,9 +539,8 @@ def run_type2_eval(config, real_csv=None, sim_csv=None, out_dir=None,
                         bootstrap_B=None, bootstrap_sample_n=None, alpha=None,
                         ratio=1.0, verbose=True):
     """
-    Run Type2 evaluation for both STRENGTH and STRUCTURE modes.
-    Each mode runs bootstrap tests for all variable pairs and outputs
-    separate summary CSVs and plots.
+    Run Type2 evaluation for STRENGTH mode.
+    Runs bootstrap tests for all variable pairs and outputs summary CSVs and plots.
     """
     if isinstance(config, str):
         cfg = read_config(config)
@@ -801,112 +577,93 @@ def run_type2_eval(config, real_csv=None, sim_csv=None, out_dir=None,
         df_pairs = pd.DataFrame()
 
     # =======================================================
-    # === Run both STRENGTH and STRUCTURE evaluations
+    # === Run STRENGTH evaluation only
     # =======================================================
-    results_all = {}
-    for mode in ["strength"]:
-        print(f"\n================ TYPE 2 ({mode.upper()}) COMPARISON ================")
-        print(f"Bootstrap {B} iterations | α={a}\n")
+    print(f"\n================ TYPE 2 (STRENGTH) COMPARISON ================")
+    print(f"Bootstrap {B} iterations | α={a}\n")
 
-        results = []
-        var_list = list(cfg["variables"].keys())
-        for i in range(len(var_list)):
-            for j in range(i + 1, len(var_list)):
-                v1, v2 = var_list[i], var_list[j]
-                cfg1, cfg2 = cfg["variables"][v1], cfg["variables"][v2]
+    results = []
+    var_list = list(cfg["variables"].keys())
+    for i in range(len(var_list)):
+        for j in range(i + 1, len(var_list)):
+            v1, v2 = var_list[i], var_list[j]
+            cfg1, cfg2 = cfg["variables"][v1], cfg["variables"][v2]
 
-                if cfg1.get("input", False) and cfg2.get("input", False):
-                    if verbose:
-                        print(f"⚪ Skipped bootstrap test for {v1} × {v2} (both input)")
-                    continue
+            if cfg1.get("input", False) and cfg2.get("input", False):
+                if verbose:
+                    print(f"⚪ Skipped bootstrap test for {v1} × {v2} (both input)")
+                continue
 
-                res = _bootstrap_assoc_significance(
-                    df_real, df_sim, v1, v2, cfg1, cfg2,
-                    B, a, sample_n, ratio, mode=mode
-                )
-                if res is not None:
-                    results.append(res)
-                    if verbose:
-                        print(f"[{mode}] {v1} × {v2}: insignificant_rate={res['insignificant_rate']:.3f}")
-
-        # ---- summary + avg ----
-        summary = pd.DataFrame(results)
-        # ---- save summary ----
-        summary_path = os.path.join(out_dir, f"summary_type2_{mode}.csv")
-        summary.to_csv(summary_path, index=False)
-        overall = np.nanmean(summary["insignificant_rate"]) if "insignificant_rate" in summary.columns else np.nan
-
-        print(f"✅ Saved summary ({mode}) → {summary_path}")
-        print(f"Average Insignificant Rate ({mode}) = {overall:.3f}\n")
-
-        # ---- plot Cramér’s V only once ----
-        if mode == "strength" and len(cat_vars) > 1:
-            print("📊 Drawing per-variable Cramér’s V comparison (with insignificant rates)...")
-            plot_dir = os.path.join(out_dir, "Figures_type2/CatCat")
-            var_name_map = {v: (vcfg.get("name", v)) for v, vcfg in cfg["variables"].items()}
-            plot_cramers_v_per_variable(
-                df_pairs,
-                plot_dir,
-                var_name_map=var_name_map,
-                summary_df=summary
+            res = _bootstrap_assoc_significance(
+                df_real, df_sim, v1, v2, cfg1, cfg2,
+                B, a, sample_n, ratio
             )
-            print(f"✅ Saved per-variable Cramér’s V plots → {plot_dir}")
-        # ---- common plots (for interpretability) ----
+            if res is not None:
+                results.append(res)
+                if verbose:
+                    print(f"[strength] {v1} × {v2}: insignificant_rate={res['insignificant_rate']:.3f}")
 
-        results_all[mode] = {
-            "avg_insignificant_rate": overall,
-            "summary_path": summary_path,
-            "summary_df": summary
-        }
-        # =======================================================
-    # === Step 3: Merge both summaries into one CSV
+    # ---- summary + avg ----
+    summary = pd.DataFrame(results)
+    summary_path = os.path.join(out_dir, "summary_type2_strength.csv")
+    summary.to_csv(summary_path, index=False)
+    overall = np.nanmean(summary["insignificant_rate"]) if "insignificant_rate" in summary.columns else np.nan
+
+    print(f"✅ Saved summary (strength) → {summary_path}")
+    print(f"Average Insignificant Rate (strength) = {overall:.3f}\n")
+
+    if len(cat_vars) > 1:
+        print("📊 Drawing per-variable Cramér’s V comparison (with insignificant rates)...")
+        plot_dir = os.path.join(out_dir, "Figures_type2/CatCat")
+        var_name_map = {v: (vcfg.get("name", v)) for v, vcfg in cfg["variables"].items()}
+        plot_cramers_v_per_variable(
+            df_pairs,
+            plot_dir,
+            var_name_map=var_name_map,
+            summary_df=summary
+        )
+        print(f"✅ Saved per-variable Cramér’s V plots → {plot_dir}")
+
     # =======================================================
-    print("\n📊 Merging strength & structure summaries...")
+    # === Aggregate summary into single CSV
+    # =======================================================
+    print("\n📊 Aggregating strength summary...")
 
-    all_summaries = []
-    for mode, res in results_all.items():
-        df_sum = res["summary_df"].copy()
-        if "mode" not in df_sum.columns:
-            df_sum["mode"] = mode
-        all_summaries.append(df_sum)
+    merged = summary.copy()
+    if not merged.empty and "mode" not in merged.columns:
+        merged["mode"] = "strength"
 
-    if all_summaries:
-        merged = pd.concat(all_summaries, ignore_index=True)
+    avg_rows = []
+    if "insignificant_rate" in merged.columns and not merged.empty:
+        strength_avg = np.nanmean(merged["insignificant_rate"])
+        avg_row = {c: "" for c in merged.columns}
+        avg_row["key"] = "avg_strength"
+        avg_row["mode"] = "strength"
+        avg_row["insignificant_rate"] = strength_avg
+        avg_rows.append(avg_row)
 
-        mode_avg_rows = []
-        for mode in ["strength", "structure"]:
-            sub = merged[merged["mode"] == mode]
-            if not sub.empty and "insignificant_rate" in sub.columns:
-                avg_val = np.nanmean(sub["insignificant_rate"])
-                avg_row = {c: "" for c in merged.columns}
-                avg_row["key"] = f"avg_{mode}"
-                avg_row["mode"] = mode
-                avg_row["insignificant_rate"] = avg_val
-                mode_avg_rows.append(avg_row)
-
-        all_avg = np.nanmean([r["insignificant_rate"] for r in mode_avg_rows])
         overall_row = {c: "" for c in merged.columns}
         overall_row["key"] = "avg"
         overall_row["mode"] = "all"
-        overall_row["insignificant_rate"] = all_avg
-        mode_avg_rows.append(overall_row)
+        overall_row["insignificant_rate"] = strength_avg
+        avg_rows.append(overall_row)
 
-        merged = pd.concat([merged, pd.DataFrame(mode_avg_rows)], ignore_index=True)
-        plot_numeric_correlations(df_real, df_sim, cfg, merged, out_dir)
-        plot_categorical_numeric(df_real, df_sim, cfg, merged, out_dir)
-        merged_path = os.path.join(out_dir, "summary_type2.csv")
-        merged.to_csv(merged_path, index=False)
-        print(f"✅ Saved merged summary → {merged_path}")
-        print(f"  strength avg = {mode_avg_rows[0]['insignificant_rate']:.3f}")
-        print(f"  structure avg = {mode_avg_rows[1]['insignificant_rate']:.3f}")
-        print(f"  overall avg   = {all_avg:.3f}\n")
-        return {
-            "avg_structure": mode_avg_rows[1]["insignificant_rate"],
-            "avg_strength": mode_avg_rows[0]["insignificant_rate"],
-            "avg_insignificant_rate": all_avg,
-            "summary_path": merged_path,
-            "summary_df": merged
-        }
+    if avg_rows:
+        merged = pd.concat([merged, pd.DataFrame(avg_rows)], ignore_index=True)
+
+    plot_numeric_correlations(df_real, df_sim, cfg, merged, out_dir)
+    plot_categorical_numeric(df_real, df_sim, cfg, merged, out_dir)
+    merged_path = os.path.join(out_dir, "summary_type2.csv")
+    merged.to_csv(merged_path, index=False)
+    print(f"✅ Saved merged summary → {merged_path}")
+    if avg_rows:
+        print(f"  strength avg = {avg_rows[0]['insignificant_rate']:.3f}")
+    return {
+        "avg_strength": avg_rows[0]["insignificant_rate"] if avg_rows else np.nan,
+        "avg_insignificant_rate": avg_rows[0]["insignificant_rate"] if avg_rows else np.nan,
+        "summary_path": merged_path,
+        "summary_df": merged
+    }
 
 # ============================================================
 # === CLI

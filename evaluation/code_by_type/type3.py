@@ -67,7 +67,7 @@ def _check_real_model_success(df_real, y, Xs, model_type):
         return False
 def _plot_full_regression_coefficients(
     df_real, df_sim, y, Xs, model_type, out_dir,
-    rate_structure=None, rate_strength=None
+    rate_strength=None
 ):
     """Compare full-data regression coefficients between real and simulated datasets."""
     formula = f"{y} ~ {' + '.join(Xs)}"
@@ -156,8 +156,6 @@ def _plot_full_regression_coefficients(
         f"Real R² = {r2_real:.3f}",
         f"Sim R² = {r2_sim:.3f}"
     ]
-    if rate_structure is not None and not np.isnan(rate_structure):
-        info_lines.append(f"Pass Rate (Structure) = {rate_structure:.2f}")
     if rate_strength is not None and not np.isnan(rate_strength):
         info_lines.append(f"Pass Rate (Strength)  = {rate_strength:.2f}")
 
@@ -258,16 +256,9 @@ def _wald_pval(b1,se1,b2,se2):
 
 def _bootstrap_regression_significance(
     df_real, df_sim, model_type, y, Xs, B, alpha, sample_n, ratio,
-    id_col="profile_id", out_dir="./Compare_Type3", mode="structure"
+    id_col="profile_id", out_dir="./Compare_Type3", mode="strength"
 ):
-    """
-    mode ∈ {"structure", "strength"}
-    -------------------------------------------------------
-    structure → F-test on β differences (Group × X interaction)
-    strength  → Fisher’s z-test on predictive R² difference
-    -------------------------------------------------------
-    Returns dict with counts, iterations, pass_count, etc.
-    """
+    """Bootstrap regression comparison under strength mode."""
     if id_col not in df_real.columns or id_col not in df_sim.columns:
         raise ValueError(f"❌ Both df_real and df_sim must contain '{id_col}' for matched bootstrap.")
 
@@ -326,30 +317,16 @@ def _bootstrap_regression_significance(
             continue
 
         try:
-            if mode == "structure":
-                # === F-test: test β_real = β_sim (interaction)
-                full_formula = f"{y} ~ {' + '.join(Xs)} * C(__group__)"
-                full = smf.ols(full_formula, data=df_comb).fit()
-                redu_formula = f"{y} ~ {' + '.join(Xs)} + C(__group__)"
-                redu = smf.ols(redu_formula, data=df_comb).fit()
-                anova_res = anova_lm(redu, full)
-                p = anova_res["Pr(>F)"].iloc[1]
-                success_count += 1
-
-            elif mode == "strength":
-                # === Fisher’s z test on predictive R² ===
-                mr = smf.ols(formula, data=rb).fit()
-                ms = smf.ols(formula, data=sb).fit()
-                r_real = np.sqrt(max(0, mr.rsquared))
-                r_sim  = np.sqrt(max(0, ms.rsquared))
-                z1, z2 = np.arctanh(r_real), np.arctanh(r_sim)
-                se = np.sqrt(1 / (len(rb) - 3) + 1 / (len(sb) - 3))
-                z = (z1 - z2) / se
-                p = 2 * norm.sf(abs(z))
-                success_count += 1
-
-            else:
-                raise ValueError(f"Unknown mode: {mode}")
+            # === Fisher’s z test on predictive R² (strength) ===
+            mr = smf.ols(formula, data=rb).fit()
+            ms = smf.ols(formula, data=sb).fit()
+            r_real = np.sqrt(max(0, mr.rsquared))
+            r_sim  = np.sqrt(max(0, ms.rsquared))
+            z1, z2 = np.arctanh(r_real), np.arctanh(r_sim)
+            se = np.sqrt(1 / (len(rb) - 3) + 1 / (len(sb) - 3))
+            z = (z1 - z2) / se
+            p = 2 * norm.sf(abs(z))
+            success_count += 1
 
         except Exception as e:
             fail_count += 1
@@ -445,98 +422,75 @@ def run_type3_eval(
         print("❌ No valid real-model fits. Exiting.")
         return
 
-    results_all = []
-    for mode in [ "strength"]:
-        print(f"\n------ Evaluating {mode.upper()} mode ------")
-        results = []
-        for y, mt in success_outcomes:
-            res = _bootstrap_regression_significance(
-                df_real, df_sim, mt, y, Xs,
-                B, a, sample_n, ratio,
-                mode=mode
-            )
-            results.append(res)
-            if verbose:
-                print(f"{y} ({mt}, {mode}) → insignificant_rate={res['insignificant_rate']:.3f}")
+    print(f"\n------ Evaluating STRENGTH mode ------")
+    results = []
+    for y, mt in success_outcomes:
+        res = _bootstrap_regression_significance(
+            df_real, df_sim, mt, y, Xs,
+            B, a, sample_n, ratio,
+            mode="strength"
+        )
+        results.append(res)
+        if verbose:
+            print(f"{y} ({mt}, strength) → insignificant_rate={res['insignificant_rate']:.3f}")
 
-        df_mode = pd.DataFrame(results)
-        df_mode["mode"] = mode
-        results_all.append(df_mode)
+    summary_all = pd.DataFrame(results)
+    summary_all["mode"] = "strength"
 
-        summary_path = os.path.join(out_dir, f"summary_type3_{mode}.csv")
-        df_mode.to_csv(summary_path, index=False)
-        avg_mode = np.nanmean(df_mode["insignificant_rate"])
-        print(f"✅ Saved {mode} summary → {summary_path}")
-        print(f"   Average Insignificant Rate ({mode}) = {avg_mode:.3f}")
+    summary_strength_path = os.path.join(out_dir, "summary_type3_strength.csv")
+    summary_all.to_csv(summary_strength_path, index=False)
+    avg_strength = np.nanmean(summary_all["insignificant_rate"])
+    print(f"✅ Saved strength summary → {summary_strength_path}")
+    print(f"   Average Insignificant Rate (strength) = {avg_strength:.3f}")
 
-    print("\n📊 Merging strength & structure summaries...")
+    print("\n📊 Aggregating strength summary...")
+    avg_rows = []
+    if not summary_all.empty:
+        avg_row = {c: "" for c in summary_all.columns}
+        avg_row["key"] = "avg_strength"
+        avg_row["mode"] = "strength"
+        avg_row["insignificant_rate"] = avg_strength
+        avg_rows.append(avg_row)
 
-    summary_all = pd.concat(results_all, ignore_index=True)
+        overall_row = {c: "" for c in summary_all.columns}
+        overall_row["key"] = "avg_all"
+        overall_row["mode"] = "overall"
+        overall_row["insignificant_rate"] = avg_strength
+        avg_rows.append(overall_row)
 
-    mode_avg_rows = []
-    avg_strength = avg_structure = np.nan
-
-    for mode in ["strength", "structure"]:
-        sub = summary_all[summary_all["mode"] == mode]
-        if not sub.empty and "insignificant_rate" in sub.columns:
-            avg_val = np.nanmean(sub["insignificant_rate"])
-            avg_row = {c: "" for c in summary_all.columns}
-            avg_row["key"] = f"avg_{mode}"
-            avg_row["mode"] = mode
-            avg_row["insignificant_rate"] = avg_val
-            mode_avg_rows.append(avg_row)
-
-            if mode == "strength":
-                avg_strength = avg_val
-            elif mode == "structure":
-                avg_structure = avg_val
-
-    valid_vals = [v for v in [avg_strength, avg_structure] if not np.isnan(v)]
-    avg_total = np.nanmean(valid_vals) if valid_vals else np.nan
-
-    overall_row = {c: "" for c in summary_all.columns}
-    overall_row["key"] = "avg_all"
-    overall_row["mode"] = "overall"
-    overall_row["insignificant_rate"] = avg_total
-    mode_avg_rows.append(overall_row)
-
-    summary_all_out = pd.concat([summary_all, pd.DataFrame(mode_avg_rows)], ignore_index=True)
+    summary_all_out = pd.concat([summary_all, pd.DataFrame(avg_rows)], ignore_index=True) if avg_rows else summary_all
 
     summary_all_path = os.path.join(out_dir, "summary_type3.csv")
     summary_all_out.to_csv(summary_all_path, index=False)
 
     print(f"\n================ SUMMARY =================")
     print(f"Average (Strength)  = {avg_strength:.3f}")
-    print(f"Average (Structure) = {avg_structure:.3f}")
-    print(f"Overall Average     = {avg_total:.3f}")
+    print(f"Overall Average     = {avg_strength:.3f}")
     print(f"📄 Summary saved to {summary_all_path}\n")
 
     r2_rows = []
     for y, mt in success_outcomes:
-        res_struct = next((r for r in summary_all.to_dict("records")
-                        if r["response"] == y and r["mode"] == "structure"), None)
         res_stren  = next((r for r in summary_all.to_dict("records")
                         if r["response"] == y and r["mode"] == "strength"), None)
-        rate_struct = res_struct["insignificant_rate"] if res_struct else np.nan
         rate_stren  = res_stren["insignificant_rate"] if res_stren else np.nan
 
         r2_real, r2_sim = _plot_full_regression_coefficients(
             df_real, df_sim, y, Xs, mt, out_dir,
-            rate_structure=rate_struct, rate_strength=rate_stren
+            rate_strength=rate_stren
         )
         r2_rows.append({
-        "response": y,
-        "r2_real": r2_real,
-        "r2_sim": r2_sim
-    })
+            "response": y,
+            "r2_real": r2_real,
+            "r2_sim": r2_sim
+        })
     r2_df = pd.DataFrame(r2_rows)
 
     save_dir = out_dir / "Data_type3"
     save_dir.mkdir(parents=True, exist_ok=True)
 
     r2_df.to_csv(save_dir / "regression_r2.csv", index=False)
+    avg_total = avg_strength
     return {
-        "avg_structure": avg_structure,
         "avg_strength": avg_strength,
         "avg_insignificant_rate": avg_total,
         "summary_path": summary_all_path,
