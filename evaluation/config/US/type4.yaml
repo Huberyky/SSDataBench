@@ -13,12 +13,12 @@ out_dir: "./1118_res"
 event_variables:
   age_finished_education:
     name: E
+  age_started_work:
+    name: W
   age_at_first_child:
     name: C
   age_at_first_marriage:
     name: M
-  # age_completed_education:
-  #   name: E
   # AGE1M:
   #   name: M
   #   value_map:

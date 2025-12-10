@@ -5,12 +5,11 @@
 # across multiple outcome variables and model types.
 # -----------------------------------------------
 
-# === Input Files ===
-real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-4_temp1.0_top1.0.csv"
-sim_csv:  "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-4_temp1.0_top1.0.csv"
+real_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/addhealth/sim_profiles_deepseek-deepseek-chat_temp1_top1.0/sampled_inputs_deepseek-deepseek-chat_temp1_top1.0.csv
+sim_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/addhealth/sim_profiles_deepseek-deepseek-chat_temp1_top1.0/sim_profiles_deepseek-deepseek-chat_temp1_top1.0.csv
 
-# === Output Directory ===
-out_dir: "./1111"
+out_dir: "./debugdeepseek"
+
 
 # === Model Types ===
 # One model type per response variable.

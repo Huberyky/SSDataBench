@@ -6,11 +6,11 @@
 # -----------------------------------------------
 
 # === Input Files ===
-real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-4_temp1.0_top1.0.csv"
-sim_csv:  "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-4_temp1.0_top1.0.csv"
-
+real_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1112/cfps/sim_profiles_meta-llama-llama-4-scout_temp1_top1.0/sampled_inputs_meta-llama-llama-4-scout_temp1_top1.0.csv
+sim_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1112/cfps/sim_profiles_meta-llama-llama-4-scout_temp1_top1.0/sim_profiles_meta-llama-llama-4-scout_temp1_top1.0.csv
+out_dir: "./debugcfps"
 # === Output Directory ===
-out_dir: "./1111"
+# out_dir: "./1111"
 
 # === Model Types ===
 # One model type per response variable.

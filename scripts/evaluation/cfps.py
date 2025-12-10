@@ -9,7 +9,7 @@ from pathlib import Path
 
 from batch_eval import add_batch_arguments, run_batch
 
-DEFAULT_SIM_ROOT = Path("./simulated_data_1117/cfps")
+DEFAULT_SIM_ROOT = Path("./simulated_data/cfps")
 DEFAULT_OUTPUT_BASE = Path("./evaluation_results/cfps")
 DEFAULT_MASTER_CFG = Path("./evaluation/config/cfps/evaluation_master.yaml")
 

@@ -56,105 +56,7 @@ def _compute_order_label(row, event_vars):
     ordered = sorted(events, key=lambda x: x[1])
     return "-".join([x[0] for x in ordered])
 from scipy.stats import chi2, norm, chi2_contingency
-# ================== Cramér’s V Pairwise Plot ==================
-def _cramers_v(table):
-    """Compute Cramér’s V from contingency table"""
-    chi2_val = chi2_contingency(table, correction=False)[0]
-    n = table.sum().sum()
-    phi2 = chi2_val / n
-    r, k = table.shape
-    phi2corr = max(0, phi2 - ((k - 1)*(r - 1)) / (n - 1))
-    rcorr = r - ((r - 1)**2) / (n - 1)
-    kcorr = k - ((k - 1)**2) / (n - 1)
-    return np.sqrt(phi2corr / min((kcorr - 1), (rcorr - 1)))
 
-def compute_cramers_v_one_to_many(df_real, df_sim, core_var, vars_list):
-    """
-    Compute Cramér’s V between a core categorical variable and multiple other categorical variables.
-    Returns a DataFrame of results for REAL and SIMULATED datasets.
-
-    Parameters
-    ----------
-    df_real, df_sim : pd.DataFrame
-        Real and simulated datasets (must contain all variables)
-    core_var : str
-        The central variable (e.g., "event_order")
-    vars_list : list of str
-        List of other categorical variables to test against
-
-    Returns
-    -------
-    pd.DataFrame
-        Columns: core_var, var, real_v, sim_v
-    """
-    records = []
-    for v in vars_list:
-        if v == core_var:
-            continue
-        try:
-            ct_r = pd.crosstab(df_real[core_var], df_real[v])
-            ct_s = pd.crosstab(df_sim[core_var], df_sim[v])
-            if (
-                ct_r.shape[0] > 1 and ct_r.shape[1] > 1 and
-                ct_s.shape[0] > 1 and ct_s.shape[1] > 1
-            ):
-                vr = _cramers_v(ct_r)
-                vs = _cramers_v(ct_s)
-                records.append({
-                    "core_var": core_var,
-                    "var": v,
-                    "real_v": vr,
-                    "sim_v": vs,
-                    "abs_diff": abs(vr - vs)
-                })
-        except Exception:
-            continue
-    return pd.DataFrame(records)
-def plot_cramers_v_one_to_many(df_pairs, out_dir, core_var, var_name_map=None, name=None, summary_df=None):
-    """Draw a compact Cramér’s V comparison plot for the core variable."""
-    if df_pairs.empty:
-        return
-
-    os.makedirs(out_dir, exist_ok=True)
-    name_map = var_name_map or {}
-    palette = {"Real": "#4C72B0", "Simulated": "#DD8452"}
-
-    rate_map = {}
-    if summary_df is not None and not summary_df.empty:
-        for _, row in summary_df.iterrows():
-            v = row.get("var") or row.get("predictor")
-            rate_map[v] = row.get("insignificant_rate", np.nan)
-
-    plt.figure(figsize=(4.2, max(3, 0.45 * len(df_pairs))))
-    for i, row in df_pairs.iterrows():
-        v = row["var"]
-        rv, sv = row["real_v"], row["sim_v"]
-        if not np.isnan(rv) and not np.isnan(sv):
-            plt.plot([rv, sv], [i, i], color="gray", lw=1.0, alpha=0.8)
-            plt.scatter(rv, i, color=palette["Real"], s=40, alpha=0.6,
-                        label="Real" if i == 0 else "", zorder=3)
-            plt.scatter(sv, i, color=palette["Simulated"], s=40, alpha=0.6,
-                        label="Simulated" if i == 0 else "", zorder=3)
-        rate = rate_map.get(v, np.nan)
-        if not np.isnan(rate):
-            plt.text(1.05, i, f"{rate:.2f}", fontsize=8, va="center", color="gray")
-
-    ylabels = [name_map.get(v, v) for v in df_pairs["var"]]
-    title = name_map.get(core_var, core_var)
-    plt.yticks(range(len(df_pairs)), ylabels, fontsize=8)
-    plt.title(f"{title}", fontsize=10)
-    # import pdb;pdb.set_trace()
-    plt.grid(axis="x", linestyle="--", alpha=0.4)
-    plt.xlim(-0.05, 1)
-    plt.xlabel("Cramér’s V", fontsize=9)
-    plt.tight_layout()
-    
-    out_path = os.path.join(out_dir, f"cramersV_{name}.png")
-    plt.savefig(out_path, dpi=300)
-    out_path = os.path.join(out_dir, f"cramersV_{name}.pdf")
-    plt.savefig(out_path, dpi=300)
-    plt.close()
-    print(f"📊 Cramér’s V (one-to-many) plot saved → {out_path}")
 def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
     """
     Delta-method z-test comparing η² (eta squared) effect sizes between
@@ -181,12 +83,10 @@ def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
             eta2 = ss_between / ss_total
             n = len(df)
             k = df["cat"].nunique()
-            # variance approximation (Cohen, 1988)
-            var_eta2 = (2 * eta2 * (1 - eta2)**2) / max(1, n - k - 1)
+            var_eta2 = (4 * eta2 * (1 - eta2)**2) / n
             return eta2, var_eta2, n
         except Exception:
             return np.nan, np.nan, np.nan
-
     eta1, var1, n1 = _eta_sq(num1, cat1)
     eta2, var2, n2 = _eta_sq(num2, cat2)
     if np.isnan(eta1) or np.isnan(eta2) or eta1 == eta2:
@@ -195,6 +95,7 @@ def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
     # Delta-method z test
     z = (eta1 - eta2) / np.sqrt(var1 + var2)
     p = 2 * norm.sf(abs(z))
+    # print(eta1, eta2, p)
     return float(p)
 
 
@@ -210,22 +111,53 @@ def _test_equal_assoc_cat_cat_strength(df, v1, v2, group_col="__grp__"):
     import pandas as pd
     from scipy.stats import chi2_contingency, norm
 
-    def _cramers_v_and_var(tab):
-        """Compute Cramér’s V and its delta-method variance."""
+
+    def _cramers_v_and_var_autograd(tab):
         try:
-            chi2_val, _, _, _ = chi2_contingency(tab, correction=False)
-            n = tab.sum().sum()
-            r, c = tab.shape
-            if n == 0 or min(r, c) <= 1:
-                return np.nan, np.nan
-            V = np.sqrt((chi2_val / n) / min(r - 1, c - 1))
-            # delta-method variance approximation
-            var_V = ((1 - V ** 2) ** 2) / (2 * n * (min(r - 1, c - 1)) ** 2)
-            return V, var_V
-        except Exception:
+            import autograd.numpy as anp
+            from autograd import jacobian
+        except ImportError:
+            raise ImportError("Please first install autograd: pip install autograd")
+        cm = np.array(tab, dtype=float) # 混淆矩阵
+        n = np.sum(cm)
+        r, c = cm.shape
+        q = min(r, c)
+        if n == 0 or q <= 1:
+            return np.nan, np.nan
+        p_hat = (cm / n).flatten()
+        def cramers_v_func(p_vec):
+
+            p_mat = p_vec.reshape((r, c))
+
+            p_row = anp.sum(p_mat, axis=1, keepdims=True)
+            p_col = anp.sum(p_mat, axis=0, keepdims=True)
+            expected = anp.dot(p_row, p_col)
+            
+            term = (p_mat - expected)**2 / (expected + 1e-20)
+            phi2 = anp.sum(term)
+            
+            return anp.sqrt(phi2 / (q - 1))
+
+        try:
+            V_est = cramers_v_func(p_hat)
+            
+            if V_est < 1e-6:
+                return 0.0, 0.0 
+
+
+            calculate_jacobian = jacobian(cramers_v_func)
+            J = calculate_jacobian(p_hat)
+            
+
+            Sigma = (np.diag(p_hat) - np.outer(p_hat, p_hat)) / n
+            
+            var_V = np.dot(J, np.dot(Sigma, J.T))
+            
+            return float(V_est), float(var_V)
+            
+        except Exception as e:
             return np.nan, np.nan
 
-    # === Split by group (0=real, 1=sim) ===
     groups = df[group_col].unique()
     if len(groups) != 2:
         return np.nan
@@ -233,25 +165,44 @@ def _test_equal_assoc_cat_cat_strength(df, v1, v2, group_col="__grp__"):
     df0 = df[df[group_col] == g0]
     df1 = df[df[group_col] == g1]
 
-    ct0 = pd.crosstab(df0[v1], df0[v2])
-    ct1 = pd.crosstab(df1[v1], df1[v2])
-    if ct0.shape[0] < 2 or ct0.shape[1] < 2 or ct1.shape[0] < 2 or ct1.shape[1] < 2:
+    cats_v1 = sorted(set(df0[v1].dropna()) | set(df1[v1].dropna()))
+    cats_v2 = sorted(set(df0[v2].dropna()) | set(df1[v2].dropna()))
+
+    x0 = pd.Categorical(df0[v1], categories=cats_v1)
+    y0 = pd.Categorical(df0[v2], categories=cats_v2)
+    x1 = pd.Categorical(df1[v1], categories=cats_v1)
+    y1 = pd.Categorical(df1[v2], categories=cats_v2)
+
+    ct0 = pd.crosstab(x0, y0)
+    ct1 = pd.crosstab(x1, y1)
+    ct0 = ct0.reindex(index=cats_v1, columns=cats_v2, fill_value=0)
+    ct1 = ct1.reindex(index=cats_v1, columns=cats_v2, fill_value=0)    
+    # import pdb; pdb.set_trace()
+    # print(ct0.shape, ct1.shape)
+    def _eff_dim(ct):
+        n_rows = (ct.sum(axis=1) > 0).sum()
+        n_cols = (ct.sum(axis=0) > 0).sum()
+        return n_rows, n_cols
+
+    r0, c0 = _eff_dim(ct0)
+    r1, c1 = _eff_dim(ct1)
+    if r0 < 2 or c0 < 2 or r1 < 2 or c1 < 2:
         return np.nan
 
-    V0, var0 = _cramers_v_and_var(ct0)
-    V1, var1 = _cramers_v_and_var(ct1)
+    V0, var0 = _cramers_v_and_var_autograd(ct0)
+    V1, var1 = _cramers_v_and_var_autograd(ct1)    
     if np.isnan(V0) or np.isnan(V1):
         return np.nan
 
-    # delta-method z test
     z = (V0 - V1) / np.sqrt(var0 + var1)
     p = 2 * norm.sf(abs(z))
+    # print(p)
     return float(p)
 
 # ---------- Bootstrap ----------
 def _bootstrap_assoc_significance(df_real, df_sim, event_order_col, pred, pred_cfg,
                                   B, alpha, sample_n, ratio,
-                                  rng=None, id_col="profile_id"):
+                                  rng=None, id_col="profile_id", mode="strength"):
     """
     Bootstrap test for equal association between event_order (categorical)
     and a predictor (categorical or numeric), comparing REAL vs SIMULATED.
@@ -284,48 +235,47 @@ def _bootstrap_assoc_significance(df_real, df_sim, event_order_col, pred, pred_c
             df[pred] = _prep(df, pred, pred_cfg)
     # import pdb; pdb.set_trace()
     # ---- Matched IDs ----
-    common_ids = sorted(set(df_real[id_col]) & set(df_sim[id_col]))
-    if len(common_ids) < 5:
-        return None
-    # print(len(common_ids))
-    n_total = len(common_ids)
-    n_b = int(sample_n or round(n_total * ratio))
-    pvals = []
 
+    pvals = []
+    # print(len(df_real), len(df_sim))
     # ---- Determine predictor type ----
     pred_type = pred_cfg.get("type", "categorical").lower()
-
+    # print(sample_n)
     for _ in range(B):
-        try:
-            sampled_ids = rng.choice(common_ids, n_b, replace=True)
-            rb = df_real.set_index(id_col).loc[sampled_ids].reset_index()
-            sb = df_sim.set_index(id_col).loc[sampled_ids].reset_index()
-            rb = rb.dropna(subset=[event_order_col, pred])
-            sb = sb.dropna(subset=[event_order_col, pred])
-            # import pdb; pdb.set_trace()
-            if len(rb) < 3 or len(sb) < 3:
-                continue
-            # print(len(rb),len(sb))
-            if pred_type == "categorical":
-                tmp = pd.concat([rb.assign(__grp__=0), sb.assign(__grp__=1)], axis=0)
-                p = _test_equal_assoc_cat_cat_strength(tmp, event_order_col, pred, "__grp__")
-            else:
-                p = _test_equal_assoc_num_cat_strength(
-                    rb[pred].values, rb[event_order_col].astype(str).values,
-                    sb[pred].values, sb[event_order_col].astype(str).values
-                )
-            if np.isnan(p):
-                pvals.append(0)
-            else:
-                pvals.append(p)
-            # print(pvals)
-        except Exception:
-            continue
+        rb = df_real.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+    )
+        sb = df_sim.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+    )
 
+        # import pdb; pdb.set_trace()
+        # if len(rb) < 3 or len(sb) < 3:
+        #     continue
+        # print(len(rb),len(sb))
+        if pred_type == "categorical":
+            tmp = pd.concat([rb.assign(__grp__=0), sb.assign(__grp__=1)], axis=0)
+            p = _test_equal_assoc_cat_cat_strength(tmp, event_order_col, pred, "__grp__")
+                # print(p)
+        else:
+
+            p = _test_equal_assoc_num_cat_strength(
+                rb[pred].values, rb[event_order_col].astype(str).values,
+                sb[pred].values, sb[event_order_col].astype(str).values
+            )
+            # print(p)
+        if np.isnan(p):
+            pvals.append(0)   
+        else:
+            pvals.append(p)
+        # print(pvals)
     if not pvals:
         return None
 
     insignificant_rate = np.mean(np.array(pvals) > alpha)
+    # print(insignificant_rate)
     return {
         "predictor": pred,
         "type": pred_type,
@@ -406,25 +356,6 @@ def run_type5_eval(
             real_n = len(real_valid)
             sim_n  = len(sim_valid)
 
-            if real_n < min_n and sim_n < min_n:
-                print(f"⚠️ Skipping combo {combo_tag} (real & sim < {min_n} samples)")
-                continue
-
-            if real_n >= min_n and sim_n < min_n:
-                print(f"❗ Sim has < {min_n} valid samples for combo {combo_tag} → assigning score = 0")
-
-                for pred in cfg['predictors'].keys():
-                    combo_results.append({
-                        'combo': combo_tag,
-                        'predictor': pred,
-                        'insignificant_rate': 0.0,
-                        'mean_p': 0.0,
-                        'pass_count': 0,
-                        'iterations': 1,
-                        'comment': f"Sim < {min_n} valid samples; scored as 0"
-                    })
-                continue
-
             if real_n < min_n:
                 print(f"⚠️ Skipping combo {combo_tag} (real < {min_n} valid samples)")
                 continue
@@ -443,7 +374,7 @@ def run_type5_eval(
                 for df in (real_valid, sim_valid):
                     df[v] = _clean_series(df[v], spec)
             Xs = list(preds.keys())
-
+            # print(Xs)
             # ---- Association significance for each predictor ----
             results = []
             for pred in Xs:
@@ -451,8 +382,8 @@ def run_type5_eval(
                 res = _bootstrap_assoc_significance(
                     df_real=real_valid,
                     df_sim=sim_valid,
-                    event_order_col="event_order",
-                    pred=pred,
+                    event_order_col="event_order",   # ✅ event sequence 是 outcome
+                    pred=pred,                       # ✅ 单个 predictor
                     pred_cfg=pred_cfg,
                     B=cfg.get("bootstrap_B", 1000),
                     alpha=cfg.get("alpha", 0.05),
@@ -460,35 +391,13 @@ def run_type5_eval(
                     ratio=cfg.get("bootstrap_sample_ratio", 1.0),
                     id_col="profile_id"
                 )
+                # print(res)
                 if res is not None:
                     res["combo"] = "→".join(combo)
                     res["predictor"] = pred
                     results.append(res)
-                # import pdb; pdb.set_trace()
-            if mode == "strength":
-                fig_tag = combo_tag.replace("→", "_")
-                plot_dir = os.path.join(out_dir, f"Figures_type5")
-                os.makedirs(plot_dir, exist_ok=True)
+                    print(f"[strength] {combo} × {pred}: insignificant_rate={res['insignificant_rate']:.3f}")
 
-                var_name_map = {v: (vcfg.get("name", v)) for v, vcfg in cfg["predictors"].items()}
-                df_pairs = compute_cramers_v_one_to_many(real_valid, sim_valid, "event_order", Xs)
-                for _, row in df_pairs.iterrows():
-                    all_pairs.append({
-                        "combo": combo_tag,
-                        "var": row["var"],
-                        "real": row["real_v"],
-                        "sim": row["sim_v"]
-                    })
-                plot_cramers_v_one_to_many(
-                    df_pairs=df_pairs,
-                    out_dir=plot_dir,
-                    core_var="event_order",
-                    var_name_map=var_name_map,
-                    name=fig_tag,
-                    summary_df=pd.DataFrame(results) if results else None
-                )
-
-                print(f"✅ Saved per-variable Cramér’s V plots → {plot_dir}")
             combo_results.extend(results)
         if all_pairs:
             save_dir = os.path.join(out_dir, "Data_type5")

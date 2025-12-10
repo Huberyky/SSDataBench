@@ -62,13 +62,6 @@ Environment overrides respected by all scripts: `NUM_PROFILES`, `MAX_WORKERS`, `
 
 ## Evaluation
 
-### Metrics
-- **Type1**: Single-variable distribution equivalence (bootstrap insignificance rate).
-- **Type2**: Pairwise association strength equivalence (categorical/numeric mixes; structure checks disabled).
-- **Type3**: Regression coefficient stability (OLS/Logit/MNLogit, strength bootstrap).
-- **Type4**: Event order distribution similarity (life-course sequencing).
-- **Type5**: Event order regression stability.
-
 ### Usage
 
 Entry scripts (one per dataset; outputs default to `evaluation_results/<dataset>/...`):
@@ -101,18 +94,3 @@ Flags accepted by `visualization/overview.py` (passed through by the script):
 - `--root` (positional via the shell script) sets the evaluation results root. Default `evaluation_results`.
 - `--single` treats `--root` as a single run/dataset folder instead of scanning subfolders.
 
-### Strength (Types 2/3/5)
-```bash
-# All datasets under the root
-bash scripts/visualization/run_strength.sh
-
-# Single dataset folder (no subfolder scan)
-bash scripts/visualization/run_strength.sh evaluation_results/nlsy --single
-
-# Limit to specific datasets (comma-separated) in batch mode
-bash scripts/visualization/run_strength.sh --datasets nlsy,acs_1980
-```
-Flags accepted by `visualization/strength.py`:
-- `--root` (positional via the shell script) sets the evaluation results root. Default `evaluation_results`.
-- `--datasets` to limit which dataset subfolders are scanned (batch mode only).
-- `--single` treats `--root` as one run/dataset folder.

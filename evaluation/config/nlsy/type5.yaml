@@ -1,6 +1,5 @@
-real_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/data/simulated_1112/nlsy/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0/sampled_inputs_gpt-3.5-turbo_temp1.0_top1.0.csv"
-sim_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/data/simulated_1112/nlsy/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0.csv"
-
+real_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/nlsy/sim_profiles_anthropic-claude-3-haiku_temp1_top1.0/sampled_inputs_anthropic-claude-3-haiku_temp1_top1.0.csv
+sim_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/nlsy/sim_profiles_anthropic-claude-3-haiku_temp1_top1.0/sim_profiles_anthropic-claude-3-haiku_temp1_top1.0.csv
 out_dir: "./1112"
 # === Event Variables ===
 event_variables:
@@ -74,6 +73,7 @@ predictors:
 
   mean_income_30_40:
     type: numeric
+    name: Mean Income (Age 30–40) 
     description: Average personal annual income between age 30 to 40
     domain: SES
     allowed:
@@ -116,6 +116,7 @@ predictors:
 
   occupation_30_40:
     type: categorical
+    name: Occupation (Age 30–40)    
     description: Main occupation between age 30 to 40
     domain: SES
     allowed:

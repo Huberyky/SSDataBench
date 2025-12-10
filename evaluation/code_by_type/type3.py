@@ -65,119 +65,6 @@ def _check_real_model_success(df_real, y, Xs, model_type):
     except Exception as e:
         print(f"[⚠️ Skip {y}: Real model check failed → {e}]")
         return False
-def _plot_full_regression_coefficients(
-    df_real, df_sim, y, Xs, model_type, out_dir,
-    rate_strength=None
-):
-    """Compare full-data regression coefficients between real and simulated datasets."""
-    formula = f"{y} ~ {' + '.join(Xs)}"
-    y_series = df_real[y]
-    if not pd.api.types.is_numeric_dtype(y_series):
-        n_classes = y_series.nunique()
-        if n_classes == 2:
-            model_type = "logit"
-        elif n_classes > 2:
-            model_type = "mnlogit"
-        else:
-            print(f"[⚠️ Skipping {y}: not enough categories]")
-            return
-
-    print(f"📈 Fitting full {model_type.upper()} regression for {y} ...")
-
-    try:
-        mr = _fit_model(df_real, formula, model_type)
-        ms = _fit_model(df_sim,  formula, model_type)
-    except Exception as e:
-        print(f"[⚠️ Full-data regression failed for {y}: {e}]")
-        return
-
-    def _get_r2(model):
-        if hasattr(model, "rsquared"):
-            return model.rsquared
-        elif hasattr(model, "prsquared"):
-            return model.prsquared
-        else:
-            return np.nan
-
-    r2_real = _get_r2(mr)
-    r2_sim  = _get_r2(ms)
-    print(f"   ↳ Real R² = {r2_real:.3f}, Sim R² = {r2_sim:.3f}")
-
-    pr, ps = _flatten_params(mr), _flatten_params(ms)
-    if isinstance(pr.index, pd.MultiIndex):
-        pr.index = pr.index.map(lambda x: f"{x[0]}:{x[1]}")
-    if isinstance(ps.index, pd.MultiIndex):
-        ps.index = ps.index.map(lambda x: f"{x[0]}:{x[1]}")
-
-    common = sorted(set(pr.index) & set(ps.index))
-    if not common:
-        print(f"[⚠️ No overlapping coefficients for {y}]")
-        return
-
-    df_beta = pd.DataFrame({
-        "β_real": pr[common],
-        "β_sim":  ps[common]
-    }).reset_index().rename(columns={"index": "coef"})
-    df_beta_melt = df_beta.melt(id_vars="coef", var_name="source", value_name="beta")
-
-    plt.figure(figsize=(max(6, len(common)*0.6), 4))
-    palette = {"β_real": "#4C72B0", "β_sim": "#DD8452"}
-    hue_order = ["β_real", "β_sim"]
-
-    ax = sns.barplot(
-        data=df_beta_melt,
-        x="coef", y="beta",
-        hue="source", hue_order=hue_order,
-        palette=palette,
-        saturation=1.0,
-        edgecolor="none",
-        errorbar=None,
-        legend=False
-    )
-
-    bars = [p for p in ax.patches]
-    bars = sorted(bars, key=lambda p: (p.get_x(), p.get_y()))
-    n_hue = len(hue_order)
-    for i, patch in enumerate(bars):
-        hue = hue_order[i % n_hue]
-        rgb = mcolors.to_rgb(palette[hue])
-        patch.set_facecolor((*rgb, 0.45))
-        patch.set_edgecolor((*rgb, 1.0))
-        patch.set_linewidth(1.5)
-
-    plt.title(f"Full Regression Coefficients — {y} ({model_type.upper()})", fontsize=11, weight="bold")
-    plt.ylabel("Coefficient (β)", fontsize=10)
-    plt.xlabel("Variable", fontsize=10)
-    plt.xticks(rotation=30, ha="right", fontsize=9)
-    plt.grid(axis="y", linestyle="--", alpha=0.4)
-    plt.tight_layout()
-
-    info_lines = [
-        f"Real R² = {r2_real:.3f}",
-        f"Sim R² = {r2_sim:.3f}"
-    ]
-    if rate_strength is not None and not np.isnan(rate_strength):
-        info_lines.append(f"Pass Rate (Strength)  = {rate_strength:.2f}")
-
-    info_text = "\n".join(info_lines)
-
-    plt.text(
-        0.98, 0.95, info_text,
-        transform=ax.transAxes,
-        ha="right", va="top",
-        fontsize=9, color="gray",
-        bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, boxstyle="round,pad=0.3")
-    )
-
-    fig_dir = os.path.join(out_dir, "Figures_type3")
-    os.makedirs(fig_dir, exist_ok=True)
-    out_path_png = os.path.join(fig_dir, f"full_regression_{y}.png")
-    out_path_pdf = os.path.join(fig_dir, f"full_regression_{y}.pdf")
-    plt.savefig(out_path_png, dpi=300)
-    plt.savefig(out_path_pdf, dpi=300)
-    plt.close()
-    print(f"📊 Full regression plot saved: {out_path_pdf}")
-    return r2_real, r2_sim
 # ================= Cleaning =================
 def _clean_series(s, cfg):
     s = s.copy()
@@ -221,37 +108,10 @@ def _fit_model(df, formula, model_type):
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
         mt = model_type.lower()
         df = df.copy()
-
-        y_name = formula.split("~")[0].strip()
-
-        if mt in ["logit", "mnlogit"]:
-            if y_name in df.columns and not pd.api.types.is_numeric_dtype(df[y_name]):
-                df[y_name] = pd.Categorical(df[y_name]).codes
-
         if mt == "ols":
             return smf.ols(formula, data=df).fit()
-        elif mt == "logit":
-            return smf.logit(formula, data=df).fit(disp=False, maxiter=100)
-        elif mt == "mnlogit":
-            return smf.mnlogit(formula, data=df).fit(disp=False, maxiter=200)
         else:
             raise ValueError(f"Unsupported model_type: {model_type}")
-
-
-def _flatten_params(model):
-    p=model.params
-    if isinstance(p,pd.DataFrame): p=p.stack()
-    return p
-
-
-def _wald_pval(b1,se1,b2,se2):
-    """Wald z test: H0 β1=β2"""
-    try:
-        se=np.sqrt(se1**2+se2**2)
-        z=(b1-b2)/se
-        return 2*norm.sf(abs(z))
-    except Exception:
-        return np.nan
 
 
 def _bootstrap_regression_significance(
@@ -280,13 +140,7 @@ def _bootstrap_regression_significance(
     # === Clean data ===
     def _clean_for_bootstrap(df):
         df = df.copy()
-        if model_type.lower() in ["logit", "mnlogit"]:
-            all_cats = pd.Index(pd.Categorical(df_real[y]).categories).union(
-                pd.Index(pd.Categorical(df_sim[y]).categories))
-            dtype = pd.api.types.CategoricalDtype(categories=list(all_cats), ordered=False)
-            df[y] = pd.Categorical(df[y], dtype=dtype).codes
-        elif model_type.lower() == "ols":
-            df[y] = pd.to_numeric(df[y], errors="coerce")
+        df[y] = pd.to_numeric(df[y], errors="coerce")
 
         for x in Xs:
             if x in df.columns:
@@ -303,9 +157,16 @@ def _bootstrap_regression_significance(
 
     # === Bootstrap iterations ===
     for b in range(B):
-        sampled_ids = rng.choice(common_ids, size=n_b, replace=True)
-        rb = df_real.set_index(id_col).loc[sampled_ids].reset_index()
-        sb = df_sim.set_index(id_col).loc[sampled_ids].reset_index()
+
+        rb = df_real.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+    )
+        sb = df_sim.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+        )
+        # print(len(rb), len(sb))
         rb["__group__"] = "Real"
         sb["__group__"] = "Sim"
         df_comb = pd.concat([rb, sb], ignore_index=True)
@@ -317,16 +178,23 @@ def _bootstrap_regression_significance(
             continue
 
         try:
-            # === Fisher’s z test on predictive R² (strength) ===
             mr = smf.ols(formula, data=rb).fit()
             ms = smf.ols(formula, data=sb).fit()
-            r_real = np.sqrt(max(0, mr.rsquared))
-            r_sim  = np.sqrt(max(0, ms.rsquared))
-            z1, z2 = np.arctanh(r_real), np.arctanh(r_sim)
-            se = np.sqrt(1 / (len(rb) - 3) + 1 / (len(sb) - 3))
-            z = (z1 - z2) / se
-            p = 2 * norm.sf(abs(z))
+            
+            R2_real = mr.rsquared
+            R2_sim  = ms.rsquared
+            n1 = len(rb)
+            n2 = len(sb)
+            
+            se1 = np.sqrt(4 * R2_real * (1 - R2_real)**2 / n1)
+            se2 = np.sqrt(4 * R2_sim * (1 - R2_sim)**2 / n2)
+            # print(R2_real , R2_sim, se1, se2,p)
+            delta = R2_real - R2_sim
+            se_delta = np.sqrt(se1**2 + se2**2)
+            z = delta / se_delta
+            p = 2 * norm.sf(abs(z))  
             success_count += 1
+
 
         except Exception as e:
             fail_count += 1
@@ -468,27 +336,6 @@ def run_type3_eval(
     print(f"Overall Average     = {avg_strength:.3f}")
     print(f"📄 Summary saved to {summary_all_path}\n")
 
-    r2_rows = []
-    for y, mt in success_outcomes:
-        res_stren  = next((r for r in summary_all.to_dict("records")
-                        if r["response"] == y and r["mode"] == "strength"), None)
-        rate_stren  = res_stren["insignificant_rate"] if res_stren else np.nan
-
-        r2_real, r2_sim = _plot_full_regression_coefficients(
-            df_real, df_sim, y, Xs, mt, out_dir,
-            rate_strength=rate_stren
-        )
-        r2_rows.append({
-            "response": y,
-            "r2_real": r2_real,
-            "r2_sim": r2_sim
-        })
-    r2_df = pd.DataFrame(r2_rows)
-
-    save_dir = out_dir / "Data_type3"
-    save_dir.mkdir(parents=True, exist_ok=True)
-
-    r2_df.to_csv(save_dir / "regression_r2.csv", index=False)
     avg_total = avg_strength
     return {
         "avg_strength": avg_strength,

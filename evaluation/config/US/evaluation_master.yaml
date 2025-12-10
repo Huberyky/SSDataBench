@@ -7,7 +7,7 @@
 real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-3.5-turbo_temp1.0_top1.0.csv"
 sim_csv:  "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-3.5-turbo_temp1.0_top1.0.csv"
 
-out_dir: "./evaluation_results"
+out_dir: "./results_1111/gpt-3.5-turbo"
 
 # === Types to Run ===
 types:
@@ -18,14 +18,14 @@ types:
   - type5
 
 # === Paths ===
-type_config_dir: "./evaluation/config"
+type_config_dir: "./evaluation/config/US/"
 type_code_dir: "./evaluation/code_by_type"
 
 # === Evaluation Settings ===
-bootstrap_B: 1000
+bootstrap_B: 100
 alpha: 0.05
-bootstrap_sample_n: 500  
+bootstrap_sample_n: 500
 
 # === Aggregation Settings ===
 aggregate_method: "mean"      # average insignificance across all types
-save_summary: trueh
+save_summary: true

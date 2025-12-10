@@ -16,7 +16,48 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
 
-EXCLUDED_MODELS = {"qwen-qwen2.5-vl"}
+DATASET_MAP = {
+    "nlsy": "NLSY",
+    "addhealth": "Add Health",
+    "cfps": "CFPS",
+    "gss_2018": "GSS",
+    "acs_1980": "ACS",
+    "cps_1980": "CPS-ASEC"
+}
+MODEL_MAP = {
+    # === OpenAI ===
+    "gpt-3.5-turbo": "gpt-3.5-turbo",
+    "gpt-4": "gpt-4",
+    "gpt-4o": "gpt-4o",
+    "openai-gpt-5": "gpt-5",
+
+    # === Google Gemini ===
+    "google-gemini-2.0-flash-001": "gemini-2.0-flash",
+    "google-gemini-2.5-flash": "gemini-2.5-flash",
+    "google-gemini-2.5-flash-lite-preview-06-17": "exclude",
+
+    # === Anthropic Claude ===
+    "anthropic-claude-3-haiku": "claude-3-haiku",
+    "anthropic-claude-3.5-haiku": "claude-3.5-haiku",
+    "anthropic-claude-haiku-4.5": "claude-4.5-haiku",
+    "anthropic-claude-3.5-sonnet": "exclude",
+
+    # === xAI Grok ===
+    "x-ai-grok-3": "grok-3",
+    "x-ai-grok-4": "grok-4",
+
+    # === Qwen ===
+    "qwen-qwen2.5-vl-32b-instruct": "qwen2.5",
+    "qwen-qwen2.5-vl-32b-instruct:free": "qwen2.5",
+
+    # === Meta Llama ===
+    "meta-llama-llama-3.1-70b-instruct": "llama-3.1",
+    "meta-llama-llama-4-scout": "llama-4-scout",
+
+    # === DeepSeek ===
+    "deepseek-deepseek-chat": "deepseek-v3",
+}
+EXCLUDED_MODELS = {"exclude"}
 
 PALETTE_REAL = "#2C5AA0"
 PALETTE_SIM = "#C65E1A"
@@ -24,10 +65,13 @@ BOX_REAL = "#A8C0E0"
 BOX_SIM = "#F1BEA7"
 
 
-def normalize_model_name(model_dir_name: str) -> str:
+def normalize_model_name(model_dir_name: str):
     base = model_dir_name.split("_")[0]
-    parts = base.split("-")
-    return "-".join(parts[:3]) if len(parts) >= 3 else base
+    mapped = MODEL_MAP.get(base, base)  
+
+    if mapped == "exclude":
+        return None
+    return mapped
 
 
 def safe_read_csv(path: Path) -> pd.DataFrame:
@@ -97,49 +141,38 @@ def plot_heatmap(df: pd.DataFrame, out_dir: Path) -> Tuple[List[str], List[str]]
     piv_heat = piv.drop(columns="__avg__")
 
     n = len(piv_heat)
-    fig = plt.figure(figsize=(16, max(4, n * 0.6)))
-    gs = GridSpec(1, 2, width_ratios=[2.3, 8.5], wspace=0.02, left=0.10, right=0.98, bottom=0.25, top=0.90)
+    fig = plt.figure(figsize=(25,  n*0.6))
+    gs = GridSpec(1, 2, width_ratios=[2.1, 8.7], wspace=0.02,
+                left=0.10, right=0.98, bottom=0.25, top=0.90)
     ax_labels = fig.add_subplot(gs[0])
     ax_heat = fig.add_subplot(gs[1], sharey=ax_labels)
 
     cmap = sns.color_palette("Blues", as_cmap=True)
-    sns.heatmap(
-        piv_heat,
-        annot=True,
-        fmt=".2f",
-        cmap=cmap,
-        cbar_kws={"label": "Average Pass Rate"},
-        yticklabels=False,
-        ax=ax_heat,
-    )
+    sns.heatmap(piv_heat, annot=True, fmt=".2f", cmap=cmap,
+                cbar_kws={'label': 'Average Pass Rate'},
+                yticklabels=False, ax=ax_heat)
 
     ax_heat.set_xlabel("")
     ax_heat.set_ylabel("")
     ax_heat.set_title("Average Pass Rate by Model × Type × Dataset", fontweight="bold")
 
-    ax_heat.set_xticks(np.arange(len(piv_heat.columns)) + 0.5)
-    ax_heat.set_xticklabels([c[1] for c in piv_heat.columns], rotation=45, ha="right")
+    raw_datasets = [c[1] for c in piv_heat.columns]
+    pretty_datasets = [DATASET_MAP.get(d, d) for d in raw_datasets]
 
+    ax_heat.set_xticks(np.arange(len(pretty_datasets)) + 0.5)
+    ax_heat.set_xticklabels(pretty_datasets, rotation=45, ha="right")
     for t in types:
-        idx = [i for i, c in enumerate(piv_heat.columns) if c[0] == t]
+        idx = [i for i, c in enumerate(piv_heat.columns) if c[0]==t]
         if idx:
-            mid = (min(idx) + max(idx) + 1) / 2
-            ax_heat.text(
-                mid,
-                -0.28,
-                t,
-                ha="center",
-                va="center",
-                fontsize=11,
-                fontweight="bold",
-                color="black",
-                transform=ax_heat.get_xaxis_transform(),
-            )
+            mid = (min(idx)+max(idx)+1)/2
+            ax_heat.text(mid, -0.18, t.capitalize(), ha='center', va='center',
+                fontsize=11, fontweight="bold", color='black', transform=ax_heat.get_xaxis_transform())
     for t in types[:-1]:
-        idx = [i for i, c in enumerate(piv_heat.columns) if c[0] == t]
+        idx = [i for i, c in enumerate(piv_heat.columns) if c[0]==t]
         if idx:
-            ax_heat.axvline(max(idx) + 1, color="gray", lw=1.5, ls="--")
+            ax_heat.axvline(max(idx)+1, color="gray", lw=1.5, ls="--")
 
+    # === 左列：完美对齐 + 动态留白 ===
     ax_labels.set_xlim(0, 1)
     ax_labels.set_ylim(ax_heat.get_ylim())
     ax_labels.invert_yaxis()
@@ -147,30 +180,37 @@ def plot_heatmap(df: pd.DataFrame, out_dir: Path) -> Tuple[List[str], List[str]]
 
     ys = np.arange(n) + 0.5
     models = piv.index.tolist()
-    avgs = piv["__avg__"].tolist()
 
-    # Compute left offset for the (Avg) label aligned to the heatmap
+    avgs = piv["__avg__"].tolist()
+    tmp_texts = []
+    for y, model in zip(ys, models):
+        t = ax_labels.text(0, y, model, fontsize=11, alpha=0)  # 隐形测量
+        tmp_texts.append(t)
     fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    max_px = max(t.get_window_extent(renderer=renderer).width for t in tmp_texts)
+    bbox_ax = ax_labels.get_window_extent(renderer=renderer)
+    ax_width_px = bbox_ax.width
+    max_rel_width = max_px / ax_width_px  # 模型名在轴坐标中所占宽度比例
+    for t in tmp_texts:
+        t.remove()
     renderer = fig.canvas.get_renderer()
     bbox_labels = ax_labels.get_window_extent(renderer=renderer)
     bbox_heat = ax_heat.get_window_extent(renderer=renderer)
     heat_left_rel = (bbox_heat.x0 - bbox_labels.x0) / bbox_labels.width
     avg_x = heat_left_rel - 0.01
     ax_labels.axvline(heat_left_rel - 0.005, color="lightgray", lw=0.8)
-
     for y, model, avg in zip(ys, models, avgs):
-        ax_labels.text(0.00, y, model, ha="left", va="center", fontsize=11, color="black", clip_on=False)
-        ax_labels.text(
-            avg_x,
-            y,
-            f"(Avg: {avg:.2f})",
-            ha="right",
-            va="center",
-            fontsize=11,
-            fontweight="bold",
-            color="black",
-            clip_on=False,
-        )
+        # 模型名左对齐
+        ax_labels.text(0.00, y, model,
+                    ha="left", va="center",
+                    fontsize=11, color="black", clip_on=False)
+        # (Avg) 右对齐到热力图左边缘
+        ax_labels.text(avg_x, y, f"(Avg: {avg:.2f})",
+                    ha="right", va="center",
+                    fontsize=11, fontweight="bold", color="black",
+                    clip_on=False)
+
 
     out_dir.mkdir(parents=True, exist_ok=True)
     plt.savefig(out_dir / "heatmap_auto_align_labels.png", dpi=300, bbox_inches="tight")
@@ -306,58 +346,6 @@ def main():
     out_dir = Path("visualization_figures")
     models_order, datasets_in_summary = plot_heatmap(df_summary, out_dir)
 
-    # In single mode, dataset folder holds files directly; base_root should be its parent.
-    base_root = args.root if not args.single else args.root.parent
-
-    # Type 2: Cramer's V pairs
-    df_type2 = collect_metric_records(
-        base_root,
-        datasets_in_summary,
-        models_order,
-        "Data_type2/cramers_v_pairs.csv",
-        real_col="real_v",
-        sim_col="sim_v",
-    )
-    plot_boxstrip(df_type2, "Type 2: Cramer's V (paired associations)", "Cramer's V", out_dir / "type2")
-
-    # Type 1: entropy
-    df_type1 = collect_metric_records(
-        base_root, datasets_in_summary, models_order, "Data_type1/entropy.csv", real_col="real", sim_col="sim"
-    )
-    plot_boxstrip(df_type1, "Type 1: Entropy distributions", "Entropy", out_dir / "type1")
-
-    # Type 3: regression R²
-    df_type3 = collect_metric_records(
-        base_root,
-        datasets_in_summary,
-        models_order,
-        "Data_type3/regression_r2.csv",
-        real_col="r2_real",
-        sim_col="r2_sim",
-    )
-    plot_boxstrip(df_type3, "Type 3: Regression R² distributions", "R²", out_dir / "type3")
-
-    # Type 4: event order entropy
-    df_type4 = collect_metric_records(
-        base_root,
-        datasets_in_summary,
-        models_order,
-        "Data_type4/event_order_entropy.csv",
-        real_col="real_entropy",
-        sim_col="sim_entropy",
-    )
-    plot_boxstrip(df_type4, "Type 4: Event order entropy", "Entropy", out_dir / "type4")
-
-    # Type 5: Cramer's V for event sequences
-    df_type5 = collect_metric_records(
-        base_root,
-        datasets_in_summary,
-        models_order,
-        "Data_type5/CramersV_pairs_all.csv",
-        real_col="real",
-        sim_col="sim",
-    )
-    plot_boxstrip(df_type5, "Type 5: Cramer's V (event sequences vs predictors)", "Cramer's V", out_dir / "type5")
 
 
 if __name__ == "__main__":

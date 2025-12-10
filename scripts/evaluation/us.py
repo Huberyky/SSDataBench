@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Batch evaluation helper for GSS 2018 runs."""
+"""Batch evaluation helper for NLSY runs."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ from pathlib import Path
 
 from batch_eval import add_batch_arguments, run_batch
 
-DEFAULT_SIM_ROOT = Path("./simulated_data/gss_2018")
-DEFAULT_OUTPUT_BASE = Path("./evaluation_results/gss_2018")
-DEFAULT_MASTER_CFG = Path("./evaluation/config/gss_2018/evaluation_master.yaml")
+DEFAULT_SIM_ROOT = Path("./simulated_data/US")
+DEFAULT_OUTPUT_BASE = Path("./evaluation_results/US")
+DEFAULT_MASTER_CFG = Path("./evaluation/config/US/evaluation_master.yaml")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run GSS 2018 evaluation across multiple model folders.")
+    parser = argparse.ArgumentParser(description="Run NLSY evaluation across multiple model folders.")
     add_batch_arguments(
         parser,
         default_sim_root=DEFAULT_SIM_ROOT,

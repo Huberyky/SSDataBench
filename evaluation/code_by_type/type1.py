@@ -36,132 +36,6 @@ def _entropy(series):
     return entropy(v, base=2)
 import matplotlib.colors as mcolors
 
-def _plot_categorical_distribution(var, r, s, out_dir, display_name=None, allowed=None, rate=None):
-    """Bar plot comparing categorical distributions."""
-    base_dir = Path(out_dir)
-    r = r.dropna()
-    s = s.dropna()
-    if len(r) == 0 or len(s) == 0:
-        return
-
-    r_pct = r.value_counts(normalize=True) * 100
-    s_pct = s.value_counts(normalize=True) * 100
-
-    if allowed and isinstance(allowed, (list, tuple)) and len(allowed) > 0:
-        cats = [c for c in allowed if (c in r_pct.index or c in s_pct.index)]
-        cats += [c for c in r_pct.index if c not in cats]
-        cats += [c for c in s_pct.index if c not in cats]
-    else:
-        cats = list(r_pct.index) + [c for c in s_pct.index if c not in r_pct.index]
-
-    comp = pd.DataFrame({
-        "category": cats,
-        "Real": [r_pct.get(c, 0.0) for c in cats],
-        "Simulated": [s_pct.get(c, 0.0) for c in cats],
-    })
-    comp_melt = comp.melt(id_vars="category", var_name="source", value_name="percent")
-
-    palette = {"Real": "#4C72B0", "Simulated": "#DD8452"}
-    hue_order = ["Real", "Simulated"]
-
-    plt.figure(figsize=(7.5, 4))
-    ax = sns.barplot(
-        data=comp_melt,
-        x="category",
-        y="percent",
-        hue="source",
-        hue_order=hue_order,
-        order=cats,
-        palette=palette,
-        saturation=1.0,
-        edgecolor="none",
-        legend=False,
-        errorbar=None,
-    )
-
-    bars = [p for p in ax.patches]
-    bars = sorted(bars, key=lambda p: (p.get_x(), p.get_y()))
-
-    n_hue = len(hue_order)
-    for i, patch in enumerate(bars):
-        hue = hue_order[i % n_hue]
-        rgb = mcolors.to_rgb(palette[hue])
-        patch.set_facecolor((*rgb, 0.45))
-        patch.set_edgecolor((*rgb, 1.0))
-        patch.set_linewidth(1.6)
-    plt.text(
-     0.95, 0.75,  f"Pass Rate = {rate:.2f}",
-    transform=ax.transAxes,
-    ha="right", va="top",
-    fontsize=9, color="gray",
-    bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, boxstyle="round,pad=0.2")
-)
-    title = display_name or var
-    plt.title(f"Distribution Comparison: {title}", fontsize=12, weight='bold')
-    plt.ylabel("Percentage (%)", fontsize=11)
-    plt.xlabel(title, fontsize=11)
-    plt.xticks(rotation=40, ha="right")
-    # plt.legend(title="", loc="upper right", frameon=False)
-    sns.despine()
-    plt.tight_layout()
-
-    fig_dir = base_dir / "Figures_type1"
-    fig_dir.mkdir(parents=True, exist_ok=True)
-    plt.savefig(fig_dir / f"{var}_distribution.png", dpi=300)
-    plt.savefig(fig_dir / f"{var}_distribution.pdf", dpi=300)
-    plt.close()
-
-    print(f"📊 Saved categorical plot: {fig_dir}")
-
-def _plot_numeric_distribution(var, r, s, out_dir, display_name=None, rate=None):
-    """KDE comparison for numeric variables."""
-    base_dir = Path(out_dir)
-
-    r = r.dropna()
-    s = s.dropna()
-    # print(len(r), len(s))
-    if len(r) == 0 or len(s) == 0:
-        return
-
-    real_color = "#4C72B0"
-    sim_color = "#DD8452"
-
-    plt.figure(figsize=(6, 4))
-    sns.kdeplot(
-        r, label="Real",
-        color=real_color,
-        linewidth=2.0,
-        fill=True,
-        alpha=0.4,
-    )
-    sns.kdeplot(
-        s, label="Simulated",
-        color=sim_color,
-        linewidth=2.0,
-        fill=True,
-        alpha=0.4,
-    )
-    title = display_name or var
-    plt.title(f"Distribution Comparison: {title}", fontsize=12, weight='bold')
-    plt.text(
-     0.95, 0.75, f"Pass Rate = {rate:.2f}",
-    transform=plt.gca().transAxes,
-    ha="right", va="top",
-    fontsize=9, color="gray",
-    bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, boxstyle="round,pad=0.2")
-)
-    plt.xlabel(title, fontsize=11)
-    plt.ylabel("Density")
-    plt.legend(title="", loc="upper right", frameon=False)
-    sns.despine()
-    plt.tight_layout()
-    fig_dir = base_dir / "Figures_type1"
-    fig_dir.mkdir(parents=True, exist_ok=True)
-    plt.savefig(fig_dir / f"{var}_distribution.png", dpi=300)
-    plt.savefig(fig_dir / f"{var}_distribution.pdf", dpi=300)
-    plt.close()
-    print(f"📊 Saved numerical plot: {fig_dir}")
-
 
 # ---------- Bootstrap Tests ----------
 def bootstrap_categorical_insignificance(r, s, B=1000, alpha=0.05, id_col="profile_id",
@@ -172,33 +46,27 @@ def bootstrap_categorical_insignificance(r, s, B=1000, alpha=0.05, id_col="profi
     r_df = r.copy().dropna()
     s_df = s.copy().dropna()
 
-    common_ids = np.intersect1d(r_df[id_col].dropna(), s_df[id_col].dropna())
-    if len(common_ids) == 0:
-        return np.nan
-    n_total = len(common_ids)
-    # import pdb; pdb.set_trace()
-    # print(n_total)
-    n_b = int(sample_n or round(n_total * ratio))
     not_sig = 0
-    r_map = r_df.set_index(id_col).iloc[:, -1]
-    s_map = s_df.set_index(id_col).iloc[:, -1]
+    r_map = r_df.set_index(id_col).iloc[:, -1].dropna()
+    s_map = s_df.set_index(id_col).iloc[:, -1].dropna()
+    # print(len(r_map), len(s_map))
     for _ in range(B):
-        sampled_ids = rng.choice(common_ids, n_b, replace=True)
-        rb = r_map.loc[sampled_ids].dropna().values
-        sb = s_map.loc[sampled_ids].dropna().values
+        rb = r_map.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+    ).values
+        sb = s_map.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+    ).values
         # print(len(rb), len(sb))
-        if len(rb) < 2 or len(sb) < 2:
-            continue
         cats = sorted(set(rb) | set(sb))
         obs = np.array([[np.sum(rb == c), np.sum(sb == c)] for c in cats])
-        try:
-            # print(obs.T)
-            _, p, _, _ = chi2_contingency(obs.T)
-            if p > alpha:
-                not_sig += 1
-            # print(chi2, p, dof, expected)
-        except Exception:
-            continue
+
+        _, p, _, _ = chi2_contingency(obs.T,  correction=False)
+        if p > alpha:
+            not_sig += 1
+    # print(p)
     return not_sig / B if B > 0 else np.nan
 
 
@@ -210,25 +78,24 @@ def bootstrap_numeric_insignificance(r, s, B=1000, alpha=0.05, id_col="profile_i
     r_df = r.copy().dropna()
     s_df = s.copy().dropna()
 
-
-    common_ids = np.intersect1d(r_df[id_col], s_df[id_col])
-    if len(common_ids) == 0:
-        return np.nan
-    n_total = len(common_ids)
-    # print(n_total)
-    n_b = int(sample_n or round(n_total * ratio))
-    r_map = r_df.set_index(id_col).iloc[:, -1]
-    s_map = s_df.set_index(id_col).iloc[:, -1]
+    not_sig = 0
+    r_map = r_df.set_index(id_col).iloc[:, -1].dropna()
+    s_map = s_df.set_index(id_col).iloc[:, -1].dropna()
 
     not_sig = 0
+    # print(len(r_map), len(s_map))
     for _ in range(B):
-        sampled_ids = rng.choice(common_ids, n_b, replace=True)
-        rb = r_map.loc[sampled_ids].dropna().values
-        sb = s_map.loc[sampled_ids].dropna().values
-        # print(len(rb),len(sb))
-        if len(rb) < 3 or len(sb) < 3:
-            continue
+        rb = r_map.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+    ).values
+        sb = s_map.sample(
+        n=sample_n, replace=True,
+        random_state=rng.integers(1e9)
+    ).values
+        # print(len(rb), len(sb))
         _, p_ks = ks_2samp(rb, sb)
+        # print(p_ks)
         if p_ks > alpha:
             not_sig += 1
     return not_sig / B if B > 0 else np.nan
@@ -292,15 +159,7 @@ def run_type1_eval(config: Union[str, Dict[str, Any]],
         })
             rate = bootstrap_categorical_insignificance(r, s, B=B, alpha=a, id_col="profile_id",
                                          sample_n=S, ratio=1.0, rng=None)
-            _plot_categorical_distribution(
-            var,
-            r[var],
-            s[var],
-            out_dir,
-            display_name,
-            allowed=vcfg.get("allowed", None),
-            rate=rate
-        )
+
 
         else:
             r = df_real[["profile_id", var]].copy()
@@ -314,14 +173,6 @@ def run_type1_eval(config: Union[str, Dict[str, Any]],
             # print(len(r), len(s))
             rate = bootstrap_numeric_insignificance(r, s, B=B, alpha=a, id_col="profile_id",
                                          sample_n=S, ratio=1.0, rng=None)
-            _plot_numeric_distribution(
-            var,
-            r[var],
-            s[var],
-            out_dir,
-            display_name,
-            rate=rate
-        )
 
         results.append({
             "variable": var,

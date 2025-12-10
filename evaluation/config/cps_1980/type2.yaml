@@ -1,10 +1,10 @@
-real_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sampled_inputs_gpt-4_temp1.0_top1.0.csv"
-sim_csv: "/home/yx5888/Workspace/AI4SS_Evaluation_local/Simulated_modified/sim_profiles_gpt-4_temp1.0_top1.0.csv"
-out_dir: "./1111"
+real_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/cps_1980/sim_profiles_anthropic-claude-3-haiku_temp1_top1.0/sampled_inputs_anthropic-claude-3-haiku_temp1_top1.0.csv
+sim_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/cps_1980/sim_profiles_anthropic-claude-3-haiku_temp1_top1.0/sim_profiles_anthropic-claude-3-haiku_temp1_top1.0.csv
+out_dir: "./debug_cps"
 
 bootstrap_B: 10
 alpha: 0.05
-bootstrap_sample_n: 500
+bootstrap_sample_n: 1000
 
 variables:
   age:
@@ -76,14 +76,14 @@ variables:
       - High school
       - College and above
 
-  laborforce:
-    name: Labor Force Status
-    type: categorical
-    description: Whether the respondent participated in the labor force
-    domain: SES
-    allowed:
-      - Not in the labor force
-      - In the labor force
+  # laborforce:
+  #   name: Labor Force Status
+  #   type: categorical
+  #   description: Whether the respondent participated in the labor force
+  #   domain: SES
+  #   allowed:
+  #     - Not in the labor force
+  #     - In the labor force
 
   occupation:
     name: Occupation

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from batch_eval import add_batch_arguments, run_batch
 
-DEFAULT_SIM_ROOT = Path("/home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/cps_1980")
+DEFAULT_SIM_ROOT = Path("./simulated_data/cps_1980")
 DEFAULT_OUTPUT_BASE = Path("./evaluation_results/cps_1980")
 DEFAULT_MASTER_CFG = Path("./evaluation/config/cps_1980/evaluation_master.yaml")
 

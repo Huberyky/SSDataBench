@@ -1,0 +1,189 @@
+real_csv: /home/yx5888/Workspace/AI4SS-Evaluation/test/cfps/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0/sampled_inputs_anthropic-claude-3.5-sonnet_temp1_top1.0.csv
+sim_csv: /home/yx5888/Workspace/AI4SS-Evaluation/test/cfps/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0.csv
+
+out_dir: "./1112"
+
+# === Event Variables ===
+event_variables:
+  age_finished_education:
+    name: E
+  age_started_work:
+    name: W
+  age_at_first_child:
+    name: C
+  age_at_first_marriage:
+    name: M
+# === Predictors (Covariates) ===
+# Used for all regressions.
+predictors:
+  gender:
+    type: categorical
+    input: true
+    domain: Demography
+    allowed:
+      - Female
+      - Male 
+ 
+
+  race:
+    type: categorical
+    input: true
+    domain: Demography
+    allowed: 
+      - White
+      - South Asian
+      - Black
+      - Other Minorities
+
+  immigrant_status:
+    type: categorical
+    input: true
+    domain: Demography
+    allowed: 
+      - non-immigrant
+      - immigrant
+  
+  mother_education:
+    type: categorical
+    input: true
+    domain: Demography
+    allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+  
+  father_education:
+    type: categorical
+    input: true
+    domain: Demography
+    allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above
+  
+  mother_immigrant_status:
+    type: categorical
+    input: true
+    domain: Demography
+    allowed:
+      - non-immigrant
+      - immigrant
+
+  father_immigrant_status:
+    type: categorical
+    input: true
+    domain: Demography
+    allowed:
+      - non-immigrant
+      - immigrant
+      
+  physical_health:
+    type: numeric
+    description: SF-12 score of physical health summary score, higher score indicates higher level of physical health
+    domain: Health
+    allowed:
+      type: numeric
+      min: 0
+      max: 80
+
+  mental_health:
+    type: numeric
+    description: SF-12 score of mental health summary score, higher score indicates higher level of mental health
+    domain: Health
+    allowed:
+      type: numeric
+      min: 0
+      max: 80
+
+  general_health:
+    type: numeric
+    description: SF-12 general health
+    domain: Health
+    allowed:
+      type: numeric
+      min: 1
+      max: 5
+
+  depression:
+    type: numeric
+    description: Self-rated depression based on CESD, higher score indicates higher level of depression
+    domain: Health
+    allowed:
+      type: numeric
+      min: 1
+      max: 4
+
+  memory:
+    type: categorical
+    description: Self-rated memory, which is an indicator of cognitive skills
+    domain: Abilities
+    allowed:
+      - Excellent
+      - Very Good
+      - Good
+      - Fair
+      - Poor
+
+
+
+
+      
+  ever_divorced:
+    name: Ever Divorced
+    type: categorical
+    description: Divorced or not lifetime
+    domain: Marriage
+    allowed:
+      - never divorced
+      - ever divorced
+
+
+  child_number:
+    name: Child Number
+    type: numeric
+    description: Number of children lifetime
+    domain: Marriage
+    allowed:
+      min: 0
+      max: 5
+
+  mean_income_30_40:
+    type: numeric
+    description: Average personal annual income between age 30 to 40
+    domain: SES
+    allowed:
+      type: numeric
+      min: 0
+      max: 10299996
+
+
+
+  occupation_30_40:
+    type: categorical
+    description: Main occupation between age 30 to 40
+    domain: SES
+    allowed:
+      - Managers
+      - Professionals
+      - Technicians
+      - Clerical
+      - Service/Sales
+      - Agriculture
+      - Craft/Trades
+      - Machine Operators
+      - Elementary
+      - Military
+    drop_values:
+      - unemployed
+
+  highest_education:
+    name: Highest Education
+    type: categorical
+    domain: SES
+    allowed:
+      - Less than high school
+      - High school
+      - Some college
+      - Bachelor and above

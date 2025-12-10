@@ -9,7 +9,7 @@ from pathlib import Path
 
 from batch_eval import add_batch_arguments, run_batch
 
-DEFAULT_SIM_ROOT = Path("./simulated_data/nlsy/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0_20251124_125143")
+DEFAULT_SIM_ROOT = Path("./simulated_data/nlsy")
 DEFAULT_OUTPUT_BASE = Path("./evaluation_results/nlsy")
 DEFAULT_MASTER_CFG = Path("./evaluation/config/nlsy/evaluation_master.yaml")
 

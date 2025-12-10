@@ -2,12 +2,10 @@
 # LEVEL 4 — Event Order Consistency Bootstrap Config
 # ===============================================
 
-# === Input Files ===
-real_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/1118/cfps/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0/sampled_inputs_anthropic-claude-3.5-sonnet_temp1_top1.0.csv"
-sim_csv:  "/home/yx5888/Workspace/AI4SS-Evaluation/1118/cfps/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0/sim_profiles_anthropic-claude-3.5-sonnet_temp1_top1.0.csv"
+real_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/addhealth/sim_profiles_deepseek-deepseek-chat_temp1_top1.0/sampled_inputs_deepseek-deepseek-chat_temp1_top1.0.csv
+sim_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/addhealth/sim_profiles_deepseek-deepseek-chat_temp1_top1.0/sim_profiles_deepseek-deepseek-chat_temp1_top1.0.csv
 
-# === Output Directory ===
-out_dir: "./1118_res"
+out_dir: "./debugdeepseek"
 
 # === Event Variables (chronological order test) ===
 event_variables:

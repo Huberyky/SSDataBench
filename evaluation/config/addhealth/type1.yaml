@@ -1,7 +1,6 @@
-real_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/data/simulated_1112/nlsy/sim_profiles_gpt-4o_temp1.0_top1.0_20251112_144942/sampled_inputs_gpt-4o_temp1.0_top1.0.csv"
-sim_csv: "/home/yx5888/Workspace/AI4SS-Evaluation/data/simulated_1112/nlsy/sim_profiles_gpt-4o_temp1.0_top1.0_20251112_144942/sim_profiles_gpt-4o_temp1.0_top1.0.csv"
-
-out_dir: "./1112"
+real_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/addhealth/sim_profiles_anthropic-claude-3.5-haiku_temp1_top1.0/sampled_inputs_anthropic-claude-3.5-haiku_temp1_top1.0.csv
+sim_csv: /home/yx5888/Workspace/AI4SS-Evaluation/simulated_data_1117/addhealth/sim_profiles_anthropic-claude-3.5-haiku_temp1_top1.0/sim_profiles_anthropic-claude-3.5-haiku_temp1_top1.0.csv
+out_dir: "./debug"
 
 bootstrap_B: 1
 alpha: 0.05
@@ -16,6 +15,8 @@ variables:
     allowed:
       - never divorced
       - ever divorced
+    value_map:
+      never married: never divorced
 
   child_number:
     name: Child Number

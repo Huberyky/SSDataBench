@@ -46,14 +46,14 @@ variables:
       - High school
       - College and above
 
-  laborforce:
-    name: Labor Force Status
-    type: categorical
-    description: Whether the respondent participated in the labor force
-    domain: SES
-    allowed:
-      - Not in the labor force
-      - In the labor force
+  # laborforce:
+  #   name: Labor Force Status
+  #   type: categorical
+  #   description: Whether the respondent participated in the labor force
+  #   domain: SES
+  #   allowed:
+  #     - Not in the labor force
+  #     - In the labor force
 
   occupation:
     name: Occupation

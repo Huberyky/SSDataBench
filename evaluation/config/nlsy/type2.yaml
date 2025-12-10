@@ -65,6 +65,7 @@ variables:
 
   mean_income_30_40:
     type: numeric
+    name: Mean Income (Age 30–40) 
     description: Average personal annual income between age 30 to 40
     domain: SES
     allowed:
@@ -127,6 +128,7 @@ variables:
 
   occupation_30_40:
     type: categorical
+    name: Occupation (Age 30–40)
     description: Main occupation between age 30 to 40
     domain: SES
     allowed:
