@@ -1,5 +1,5 @@
 #!/bin/bash
-# Unified sanity run for simulation across all models
+# Unified sanity run for simulation v4 across all models
 
 set -euo pipefail
 
@@ -7,14 +7,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 SIMULATION_SCRIPT="$PROJECT_ROOT/simulation/generation.py"
-CONTENT_CONFIG="${SIM_CONTENT_CONFIG:-$PROJECT_ROOT/simulation/configs/content/cfps.yaml}"
+CONTENT_CONFIG="${SIM_CONTENT_CONFIG:-$PROJECT_ROOT/simulation/configs/content/UnderstandingSociety.yaml}"
 PARAMS_DIR="$PROJECT_ROOT/simulation/configs/param"
-OUTPUT_BASE="${SIM_OUTPUT_DIR:-$PROJECT_ROOT/simulated_data/cfps}"
+OUTPUT_BASE="${SIM_OUTPUT_DIR:-$PROJECT_ROOT/simulated_data/US}"
 NUM_PROFILES="${NUM_PROFILES:-5}"
 MAX_WORKERS="${MAX_WORKERS:-4}"
 
 # list of models (corresponding to YAML filenames)
 MODELS=(
+  gemini25
   claude3   
   claude35 
   claude45 
@@ -30,6 +31,8 @@ MODELS=(
   grok4
   deepseek
 )
+
+  
 echo "=== Running sanity simulations for all models ==="
 echo "Models: ${MODELS[*]}"
 echo "Output base: $OUTPUT_BASE"
@@ -40,7 +43,7 @@ for model in "${MODELS[@]}"; do
     OUTPUT_DIR="${OUTPUT_BASE}"
 
     echo "------------------------------------------------------------"
-    echo "▶ Running sanity simulation for model: ${model}"
+    echo "▶ Running v4 sanity simulation for model: ${model}"
     echo "  script:    $SIMULATION_SCRIPT"
     echo "  content:   $CONTENT_CONFIG"
     echo "  params:    $PARAMS_CONFIG"

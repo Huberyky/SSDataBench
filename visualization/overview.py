@@ -184,14 +184,14 @@ def plot_heatmap(df: pd.DataFrame, out_dir: Path) -> Tuple[List[str], List[str]]
     avgs = piv["__avg__"].tolist()
     tmp_texts = []
     for y, model in zip(ys, models):
-        t = ax_labels.text(0, y, model, fontsize=11, alpha=0)  # 隐形测量
+        t = ax_labels.text(0, y, model, fontsize=11, alpha=0)  
         tmp_texts.append(t)
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     max_px = max(t.get_window_extent(renderer=renderer).width for t in tmp_texts)
     bbox_ax = ax_labels.get_window_extent(renderer=renderer)
     ax_width_px = bbox_ax.width
-    max_rel_width = max_px / ax_width_px  # 模型名在轴坐标中所占宽度比例
+    max_rel_width = max_px / ax_width_px  
     for t in tmp_texts:
         t.remove()
     renderer = fig.canvas.get_renderer()

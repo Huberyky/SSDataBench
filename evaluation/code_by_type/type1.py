@@ -5,11 +5,8 @@
 type1.py
 
 Compare real vs. simulated distributions for type-1 variables
-with bootstrap-based insignificance frequency.
+via bootstrap significance tests.
 
-Now includes pre-bootstrap visualization for each variable:
-  - categorical: bar plot of real vs. simulated percentage
-  - numeric: KDE plot of real vs. simulated density
 """
 
 import os, json, math, argparse

@@ -15,16 +15,23 @@ MAX_WORKERS="${MAX_WORKERS:-4}"
 
 # list of models (corresponding to YAML filenames)
 MODELS=(
-  "qwen"
+  gemini25
+  claude3   
+  claude35 
+  claude45 
+  grok3
+  llama3
+  llama4
+  qwen25
+  deepseek
+  gpt4
+  gpt35
+  gpt4o
+  gpt5
+  grok4
+  deepseek
 )
-  # "claude"
-  # "deepseek"
-  # "gemini"
-  # "gpt4"
-  # "gpt4o"
-  # "gpt5"
-  # "gpt35"
-  # "grok"
+
 echo "=== Running sanity simulations for all models ==="
 echo "Models: ${MODELS[*]}"
 echo "Output base: $OUTPUT_BASE"

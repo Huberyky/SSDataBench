@@ -3,18 +3,11 @@
 
 """
 type4.py
--------------------------------------------------------------
+
 Compare REAL vs. SIMULATED datasets in terms of the
 relative ORDER of key life-course events
-(e.g., education completion, marriage, first birth).
+via bootstrap significance tests.
 
-Adds visualization: draws one example bootstrap
-distribution comparison (real vs. simulated order patterns).
-
-Outputs:
-  • summary.csv — summary statistics
-  • event_order_distribution.png — example bootstrap plot
--------------------------------------------------------------
 """
 
 import os, argparse, json, itertools
@@ -86,7 +79,7 @@ def _bootstrap_order_consistency(
 
     rng = np.random.default_rng()
     pvals, dissim_vals = [], []
-    example_tbl = None  # ✅ 保存一次用于画图的样本
+    example_tbl = None 
 
     for b in range(B):
         try:

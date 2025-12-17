@@ -1,20 +1,17 @@
-# Benchmarking Population-Level Realism of LLM-based Society Simulation
+# Evaluating Statistical Realism of LLM-generated Social Science Data
 
 ## Abstract
-
-Large language models (LLMs) show great promise for simulating human societies, potentially expanding the methodological toolkit of computational social science.
-However, while existing studies have examined the individual-level predictability or behavioral plausibility of LLM simulations, their ability to reproduce real-world population-level social statistical patterns—which lie at the core of social science research—remains largely untested. 
-This work presents the first systematic benchmark of population-level realism in LLM-based society simulations, evaluating how well simulated populations reproduce key statistical patterns observed in real societies.
- We analyze five types of statistical patterns central to social science research, including univariate distributions, bivariate associations, multivariate prediction of social outcomes, life-course event sequence distributions, and multivariate prediction of life-course event sequences.
- Our benchmark covers 10 longitudinal and 5 cross-sectional datasets encompassing xx variables across six major social domains: demographics, socioeconomic status (SES), marriage, health, abilities, and attitudes.
-Our benchmark establishes a unified statistical testbed for quantifying population-level realism, laying the foundation for rigorous evaluation of AI-driven society simulations.
-
+Large Language Models (LLMs) show great promise for generating social science data, potentially expanding the methodological toolkit of computational social science.
+However, while existing studies have examined the individual-level predictability or behavioral plausibility of LLM simulations, their ability to reproduce real-world, population-level statistical patterns, which lie at the core of social science research, remains largely untested. 
+In this article, we introduce SSDataBench, the first systematic benchmark designed to evaluate population-level statistical realism in LLM-generated social science data. The benchmark assesses five types of statistical patterns central to social research: univariate distributions, bivariate associations, multivariate outcome predictions, life event sequence distributions, and the associations between life event sequences and covariate variables. SSDataBench spans four longitudinal datasets and three cross-sectional datasets across six major social domains: demographics, socioeconomic status, marriage, health, abilities, and attitudes.
+Our analysis uncovers systematic representational limitations in current LLMs, which manifest as a marked tendency to compress real-world heterogeneity into simplified topological structures.
+Overall, this work establishes a unified statistical testbed for assessing population-level realism and highlights the need for models that represent heterogeneous human societies with greater statistical fidelity.
 ## Setup
 
 1. Install dependencies.
 
   ```bash
-  pip install requirements.txt
+  pip install -r requirements.txt
   ```
 
 2. Create `.env` with your API key if you plan to regenerate simulations:
@@ -45,6 +42,7 @@ bash scripts/simulation/cps_1980.sh
 bash scripts/simulation/gss_2018.sh
 bash scripts/simulation/nlsy79.sh
 bash scripts/simulation/addhealth.sh
+bash scripts/simulation/understandingsociety.sh
 
 # Single-model smoketests
 bash scripts/simulation/gpt5_sanity.sh
@@ -71,7 +69,8 @@ python scripts/evaluation/cfps.py
 python scripts/evaluation/nlsy.py
 python scripts/evaluation/addhealth.py
 python scripts/evaluation/gss_2018.py
-python scripts/evaluation/cps_1980.py \
+python scripts/evaluation/cps_1980.py 
+python scripts/evaluation/us.py \
   --sim-root /path/to/simulated_data/cps_1980 \
   --output-base ./evaluation_results/cps_1980 \
   --config ./evaluation/config/cps_1980/evaluation_master.yaml
@@ -86,9 +85,6 @@ Plots live in `visualization/` (code) and `scripts/visualization/` (entrypoints)
 ```bash
 # Traverse datasets under evaluation_results (default) and plot all runs
 bash scripts/visualization/run_overview.sh
-
-# Point to a specific dataset folder and only plot that folder's CSVs
-bash scripts/visualization/run_overview.sh evaluation_results/nlsy --single
 ```
 Flags accepted by `visualization/overview.py` (passed through by the script):
 - `--root` (positional via the shell script) sets the evaluation results root. Default `evaluation_results`.

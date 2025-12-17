@@ -2,20 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-type5_event_order_equal_assoc_bootstrap.py
+type5.py
 -----------------------------------------------------------
 Bootstrap test of EQUAL ASSOCIATION STRENGTH between event_order
-and each predictor across REAL vs SIMULATED datasets.
+and each predictor across REAL vs SIMULATED datasets
+via bootstrap significance tests.
 
-Method:
-  - Use log-linear LRT: test A:B:Group 3-way interaction = 0
-  - Repeat with bootstrap matched samples
-  - Compute insignificant rate (p > α)
-
-Outputs:
-  • summary.csv — per-variable insignificant rates
-  • Bar plot — Equal Association Pass Rate
------------------------------------------------------------
 """
 
 import os, argparse, json, warnings
@@ -206,10 +198,6 @@ def _bootstrap_assoc_significance(df_real, df_sim, event_order_col, pred, pred_c
     """
     Bootstrap test for equal association between event_order (categorical)
     and a predictor (categorical or numeric), comparing REAL vs SIMULATED.
-
-    Supports:
-      - categorical predictor → log-linear LRT
-      - numeric predictor → two-way ANOVA
     """
     if rng is None:
         rng = np.random.default_rng()

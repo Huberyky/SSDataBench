@@ -4,17 +4,8 @@
 """
 type3.py
 
-Bootstrap significance comparison of regression models (REAL vs. SIMULATED).
-
-Each bootstrap iteration fits the same regression model to both datasets and
-tests whether all coefficients are statistically equal (H0: β_real = β_sim).
-
-Scoring rule:
-  - 1 point if *all* coefficients have p > α (not significant)
-  - 0 otherwise
-
-Final similarity_score = mean(points across B iterations)
-------------------------------------------------------------
+Bootstrap significance comparison of regression models (REAL vs. SIMULATED)
+via bootstrap significance tests.
 Supports: ols
 """
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 type2_.py — Compare REAL vs. SIMULATED pairwise associations
-via bootstrap significance tests for STRENGTH only.
+via bootstrap significance tests.
 
 ----------------------------------------------------------------------
 Association patterns supported:
@@ -10,8 +10,6 @@ Association patterns supported:
   • numerical × numerical
   • numerical × categorical
 
-Output:
-  summary_type2_strength.csv (plus merged summary_type2.csv)
 """
 import os, math, argparse, json, warnings
 import numpy as np, pandas as pd
