@@ -28,7 +28,6 @@ model_type:
   - ols
   - ols
   - ols
-  - ols
 # === Response Variables ===
 # Each variable can specify:
 #   name: friendly display name (used in plots or summaries)
@@ -65,14 +64,6 @@ response:
       min: 6
       max: 63
 
-  age_started_work:
-    name: Age Started Work
-    type: numeric
-    description: Age started work
-    domain: SES
-    allowed:
-      min: 10
-      max: 80
 
   gender_role:
     name: Gender Role
@@ -90,6 +81,7 @@ response:
       type: numeric
       min: 0
       max: 10299996
+    log_transform: True
   fixed_mindset:
     name: Fixed Mindset
     type: numeric

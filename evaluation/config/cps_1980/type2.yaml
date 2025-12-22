@@ -112,7 +112,7 @@ variables:
     allowed:
       min: 0
       max: 9999997
-
+    log_transform: True
   poverty_status:
     name: Poverty Status
     type: categorical

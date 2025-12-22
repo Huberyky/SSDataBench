@@ -64,6 +64,7 @@ response:
     allowed:
       min: 0
       max: 75000
+    log_transform: True
 # === Predictors (Covariates) ===
 predictors:
   age:

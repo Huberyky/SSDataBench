@@ -167,7 +167,10 @@ def run_type1_eval(config: Union[str, Dict[str, Any]],
             s[var] = drop_values(s[var], vcfg.get("drop_values", []))
             r[var] = to_numeric_clean(r[var])
             s[var] = to_numeric_clean(s[var])
-            # print(len(r), len(s))
+            if vcfg.get("log_transform", False) is True:
+                r[var] = np.where(r[var] >= 0, np.log1p(r[var]), np.nan)
+                s[var] = np.where(s[var] >= 0, np.log1p(s[var]), np.nan)
+            
             rate = bootstrap_numeric_insignificance(r, s, B=B, alpha=a, id_col="profile_id",
                                          sample_n=S, ratio=1.0, rng=None)
 

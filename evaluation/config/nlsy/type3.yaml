@@ -74,7 +74,7 @@ response:
       type: numeric
       min: 0
       max: 10299996
-
+    log_transform: True
 
 # === Predictors (Covariates) ===
 predictors:

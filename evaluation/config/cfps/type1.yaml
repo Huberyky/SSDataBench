@@ -61,7 +61,8 @@ variables:
       type: numeric
       min: 0
       max: 10299996
-
+    log_transform: True
+    
   age_at_first_child:
     name: Age at First Child
     type: numeric
@@ -80,14 +81,6 @@ variables:
       min: 6
       max: 63
 
-  age_started_work:
-    name: Age Started Work
-    type: numeric
-    description: Age started work
-    domain: SES
-    allowed:
-      min: 10
-      max: 80
 
   highest_education:
     name: Highest Education

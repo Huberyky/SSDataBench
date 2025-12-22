@@ -205,6 +205,8 @@ def _bootstrap_assoc_significance(df_real, df_sim, v1, v2, cfg1, cfg2,
         s = drop_values(s, cfg.get("drop_values", []))
         if cfg.get("type", "").lower() == "numeric":
             s = to_numeric_clean(s)
+        if cfg.get("log_transform", False) is True:
+            s = np.where(s >= 0, np.log1p(s), np.nan)
         return s
 
     if v1 in df_real.columns: df_real[v1] = _prep(df_real, v1, cfg1)

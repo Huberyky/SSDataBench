@@ -18,8 +18,8 @@ types:
   # - type5
 
 # === Paths ===
-type_config_dir: "./evaluation/config/acs_1980/"
-type_code_dir: "./evaluation/code_by_type"
+type_config_dir: "./evaluation_v6/config/acs_1980/"
+type_code_dir: "./evaluation_v6/code_by_type"
 
 # === Evaluation Settings ===
 bootstrap_B: 100

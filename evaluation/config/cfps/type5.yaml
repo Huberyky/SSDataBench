@@ -141,6 +141,8 @@ predictors:
       type: numeric
       min: 0
       max: 10299996
+    log_transform: True
+          
   growth_mindset:
     name: Growth Mindset
     type: numeric

@@ -107,7 +107,7 @@ variables:
       type: numeric
       min: 0
       max: 10299996
-
+    log_transform: True
 
   age_finished_education:
     name: Age Finished Education

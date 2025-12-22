@@ -99,14 +99,6 @@ variables:
       min: 6
       max: 63
 
-  age_started_work:
-    name: Age Started Work
-    type: numeric
-    description: Age started work
-    domain: SES
-    allowed:
-      min: 10
-      max: 80
 
   occupation_30_40:
     type: categorical
@@ -134,7 +126,8 @@ variables:
       type: numeric
       min: 0
       max: 10299996
-
+    log_transform: True
+    
   self_rated_health:
     name: Self-rated Health
     type: categorical

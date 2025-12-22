@@ -36,7 +36,7 @@ response:
     allowed:
       min: 0
       max: 9999997
-
+    log_transform: True
   age_first_childbirth:
     name: Age at First Childbirth
     type: numeric

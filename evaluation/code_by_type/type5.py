@@ -216,6 +216,8 @@ def _bootstrap_assoc_significance(df_real, df_sim, event_order_col, pred, pred_c
             s = pd.to_numeric(s, errors="coerce")
         else:
             s = s.astype("category")
+        if cfg.get("log_transform", False) is True:
+            s = np.where(s >= 0, np.log1p(s), np.nan)
         return s
 
     for df in (df_real, df_sim):

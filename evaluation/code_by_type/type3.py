@@ -70,6 +70,8 @@ def _clean_series(s, cfg):
         s = pd.to_numeric(s, errors="coerce")
     elif cfg.get("type","").lower()=="categorical":
         s = s.astype("category")
+    if cfg.get("log_transform", False) is True:
+        s = np.where(s >= 0, np.log1p(s), np.nan)
     return s
 
 
