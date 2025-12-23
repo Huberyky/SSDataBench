@@ -1,10 +1,11 @@
 # Evaluating Statistical Realism of LLM-generated Social Science Data
 
 ## Abstract
-Large Language Models (LLMs) show great promise for generating social science data, potentially expanding the methodological toolkit of computational social science.
-However, while existing studies have examined the individual-level predictability or behavioral plausibility of LLM simulations, their ability to reproduce real-world, population-level statistical patterns, which lie at the core of social science research, remains largely untested. 
-In this article, we introduce SSDataBench, the first systematic benchmark designed to evaluate population-level statistical realism in LLM-generated social science data. The benchmark assesses five types of statistical patterns central to social research: univariate distributions, bivariate associations, multivariate outcome predictions, life event sequence distributions, and the associations between life event sequences and covariate variables. SSDataBench spans four longitudinal datasets and three cross-sectional datasets across six major social domains: demographics, socioeconomic status, marriage, health, abilities, and attitudes.
-Our analysis uncovers systematic representational limitations in current LLMs, which manifest as a marked tendency to compress real-world heterogeneity into simplified topological structures.
+Large Language Models (LLMs) show great promise for simulating human societies, potentially expanding the methodological toolkit of computational social science.
+However, while existing studies have examined the individual-level predictability or behavioral plausibility of LLM simulations, their ability to reproduce real-world population-level statistical patterns, which lie at the core of social science research, remains largely untested. 
+We introduce SSDataBench, the first systematic benchmark designed to evaluate population-level statistical realism in LLM-based society simulations. 
+The benchmark assesses five types of statistical patterns central to social research: univariate distributions, bivariate associations, multivariate outcome prediction, life event sequence distributions, and the association between life event sequences and covariate variables. SSDataBench spans four longitudinal datasets and three cross-sectional datasets across six major social domains, including demographics, socioeconomic status, marriage, health, abilities, and attitudes.
+Our analysis uncovers systematic representational limitations in current LLMs, including a marked tendency to compress complex empirical variation into simplified topological structures.
 Overall, this work establishes a unified statistical testbed for assessing population-level realism and highlights the need for models that represent heterogeneous human societies with greater statistical fidelity.
 ## Setup
 

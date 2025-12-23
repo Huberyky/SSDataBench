@@ -19,7 +19,7 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 from scipy.stats import chi2
 
-from .common import read_config
+from .common import read_config, clean_str, apply_value_map, drop_values, to_numeric_clean
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -90,7 +90,15 @@ def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
     # print(eta1, eta2, p)
     return float(p)
 
-
+def _prep(df, v, cfg):
+    s = df[v].map(clean_str)
+    s = apply_value_map(s, cfg.get("value_map", {}))
+    s = drop_values(s, cfg.get("drop_values", []))
+    if cfg.get("type", "").lower() == "numeric":
+        s = to_numeric_clean(s)
+    if cfg.get("log_transform", False) is True:
+        s = np.where(s >= 0, np.log1p(s), np.nan)
+    return s    
 def _test_equal_assoc_cat_cat_strength(df, v1, v2, group_col="__grp__"):
     """
     Delta-method z-test comparing Cramér’s V (association strength)
@@ -192,74 +200,54 @@ def _test_equal_assoc_cat_cat_strength(df, v1, v2, group_col="__grp__"):
     return float(p)
 
 # ---------- Bootstrap ----------
-def _bootstrap_assoc_significance(df_real, df_sim, event_order_col, pred, pred_cfg,
+def _bootstrap_assoc_significance(df_r, df_s, event_order_col, pred, pred_cfg,
                                   B, alpha, sample_n, ratio,
                                   rng=None, id_col="profile_id", mode="strength"):
     """
     Bootstrap test for equal association between event_order (categorical)
     and a predictor (categorical or numeric), comparing REAL vs SIMULATED.
     """
+    df_real = df_r.copy()
+    df_sim = df_s.copy()    
+    df_real = df_real.dropna(subset=[pred,event_order_col])
+    df_sim = df_sim.dropna(subset=[pred,event_order_col])     
     if rng is None:
         rng = np.random.default_rng()
     if id_col not in df_real.columns or id_col not in df_sim.columns:
         raise ValueError(f"❌ Both datasets must contain '{id_col}'.")
 
-    # ---- Prepare predictor ----
-    def _prep(df, v, cfg):
-        s = df[v].astype(str).str.strip().replace({"": np.nan, "NA": np.nan, "nan": np.nan})
-        if "value_map" in cfg:
-            for k, vmap in cfg["value_map"].items():
-                s = s.replace(k, vmap)
-        if "drop_values" in cfg:
-            s = s.replace(cfg["drop_values"], np.nan)
-        if cfg.get("type", "").lower() == "numeric":
-            s = pd.to_numeric(s, errors="coerce")
-        else:
-            s = s.astype("category")
-        if cfg.get("log_transform", False) is True:
-            s = np.where(s >= 0, np.log1p(s), np.nan)
-        return s
-
-    for df in (df_real, df_sim):
-        if pred in df.columns:
-            df[pred] = _prep(df, pred, pred_cfg)
-    # import pdb; pdb.set_trace()
-    # ---- Matched IDs ----
-
     pvals = []
-    # print(len(df_real), len(df_sim))
-    # ---- Determine predictor type ----
     pred_type = pred_cfg.get("type", "categorical").lower()
     # print(sample_n)
     for _ in range(B):
-        rb = df_real.sample(
-        n=sample_n, replace=True,
-        random_state=rng.integers(1e9)
-    )
-        sb = df_sim.sample(
-        n=sample_n, replace=True,
-        random_state=rng.integers(1e9)
-    )
+        try:
+            rb = df_real.sample(
+            n=sample_n, replace=True,
+            random_state=rng.integers(1e9)
+        )
+            sb = df_sim.sample(
+            n=sample_n, replace=True,
+            random_state=rng.integers(1e9)
+        )
 
-        # import pdb; pdb.set_trace()
-        # if len(rb) < 3 or len(sb) < 3:
-        #     continue
-        # print(len(rb),len(sb))
-        if pred_type == "categorical":
-            tmp = pd.concat([rb.assign(__grp__=0), sb.assign(__grp__=1)], axis=0)
-            p = _test_equal_assoc_cat_cat_strength(tmp, event_order_col, pred, "__grp__")
+
+            if pred_type == "categorical":
+                tmp = pd.concat([rb.assign(__grp__=0), sb.assign(__grp__=1)], axis=0)
+                p = _test_equal_assoc_cat_cat_strength(tmp, event_order_col, pred, "__grp__")
+                    # print(p)
+            else:
+
+                p = _test_equal_assoc_num_cat_strength(
+                    rb[pred].values, rb[event_order_col].astype(str).values,
+                    sb[pred].values, sb[event_order_col].astype(str).values
+                )
                 # print(p)
-        else:
-
-            p = _test_equal_assoc_num_cat_strength(
-                rb[pred].values, rb[event_order_col].astype(str).values,
-                sb[pred].values, sb[event_order_col].astype(str).values
-            )
-            # print(p)
-        if np.isnan(p):
+            if np.isnan(p):
+                pvals.append(0)   
+            else:
+                pvals.append(p)
+        except:
             pvals.append(0)   
-        else:
-            pvals.append(p)
         # print(pvals)
     if not pvals:
         return None
@@ -313,7 +301,10 @@ def run_type5_eval(
         sim[v] =_clean_series(sim[v],spec)
         real[v] = pd.to_numeric(real[v], errors="coerce")
         sim[v]  = pd.to_numeric(sim[v],  errors="coerce")
-
+    preds = cfg["predictors"]
+    for v, spec in preds.items():
+        for df in (real, sim):
+            df[v] = _prep(df,v, spec)
     import itertools
     results_all = {}
     for mode in ["strength"]:
@@ -359,10 +350,6 @@ def run_type5_eval(
 
             # predictors
 
-            preds = cfg["predictors"]
-            for v, spec in preds.items():
-                for df in (real_valid, sim_valid):
-                    df[v] = _clean_series(df[v], spec)
             Xs = list(preds.keys())
             # print(Xs)
             # ---- Association significance for each predictor ----
@@ -370,8 +357,8 @@ def run_type5_eval(
             for pred in Xs:
                 pred_cfg = cfg["predictors"].get(pred, {"type": "categorical"})
                 res = _bootstrap_assoc_significance(
-                    df_real=real_valid,
-                    df_sim=sim_valid,
+                    df_r=real_valid,
+                    df_s=sim_valid,
                     event_order_col="event_order",   # ✅ event sequence 是 outcome
                     pred=pred,                       # ✅ 单个 predictor
                     pred_cfg=pred_cfg,

@@ -53,7 +53,7 @@ def _clean_series(s, cfg):
 
 # ---------- Core Bootstrap ----------
 def _bootstrap_order_consistency(
-    df_real, df_sim, event_vars,
+    df_r, df_s, event_vars,
     B=1000, alpha=0.05,
     sample_n=None, ratio=1.0,
     id_col="profile_id", verbose=True,
@@ -67,10 +67,12 @@ def _bootstrap_order_consistency(
         - mean_p
         - mean_dissimilarity (Index of Dissimilarity)
     """
+    df_real = df_r.copy()
+    df_sim = df_s.copy()
     if id_col not in df_real.columns or id_col not in df_sim.columns:
         raise ValueError(f"❌ Both datasets must contain '{id_col}' for matched bootstrap.")
-    df_real = df_real.copy().dropna(subset=event_vars, how="any")
-    df_sim = df_sim.copy().dropna(subset=event_vars, how="any")
+    df_real = df_real.dropna(subset=event_vars, how="any")
+    df_sim = df_sim.dropna(subset=event_vars, how="any")
 
     if verbose:
         print(f"\n================ TYPE 4 COMPARISON ================")

@@ -11,6 +11,7 @@ Association patterns supported:
   • numerical × categorical
 
 """
+
 import os, math, argparse, json, warnings
 import numpy as np, pandas as pd
 from scipy.stats import chi2, norm, chi2_contingency
@@ -31,7 +32,15 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+def _prep(df, v, cfg):
+    s = df[v].map(clean_str)
+    s = apply_value_map(s, cfg.get("value_map", {}))
+    s = drop_values(s, cfg.get("drop_values", []))
+    if cfg.get("type", "").lower() == "numeric":
+        s = to_numeric_clean(s)
+    if cfg.get("log_transform", False) is True:
+        s = np.where(s >= 0, np.log1p(s), np.nan)
+    return s    
 def _test_equal_assoc_cat_cat_strength(df, v1, v2, group_col="__grp__"):
     """
     Delta-method z-test comparing Cramér’s V (association strength)
@@ -188,10 +197,12 @@ def _test_equal_assoc_num_cat_strength(num1, cat1, num2, cat2):
 # ============================================================
 # === Unified Bootstrap
 # ============================================================
-def _bootstrap_assoc_significance(df_real, df_sim, v1, v2, cfg1, cfg2,
+def _bootstrap_assoc_significance(df_r, df_s, v1, v2, cfg1, cfg2,
                                   B, alpha, sample_n, ratio, rng=None,
                                   id_col="profile_id", mode="strength"):
     """Bootstrap testing under strength mode."""
+    df_real = df_r.copy()
+    df_sim = df_s.copy()
     if rng is None:
         rng = np.random.default_rng()
     if id_col not in df_real.columns or id_col not in df_sim.columns:
@@ -199,20 +210,6 @@ def _bootstrap_assoc_significance(df_real, df_sim, v1, v2, cfg1, cfg2,
     t1 = cfg1.get("type", "categorical").lower()
     t2 = cfg2.get("type", "categorical").lower()
 
-    def _prep(df, v, cfg):
-        s = df[v].map(clean_str)
-        s = apply_value_map(s, cfg.get("value_map", {}))
-        s = drop_values(s, cfg.get("drop_values", []))
-        if cfg.get("type", "").lower() == "numeric":
-            s = to_numeric_clean(s)
-        if cfg.get("log_transform", False) is True:
-            s = np.where(s >= 0, np.log1p(s), np.nan)
-        return s
-
-    if v1 in df_real.columns: df_real[v1] = _prep(df_real, v1, cfg1)
-    if v2 in df_real.columns: df_real[v2] = _prep(df_real, v2, cfg2)
-    if v1 in df_sim.columns:  df_sim[v1] = _prep(df_sim, v1, cfg1)
-    if v2 in df_sim.columns:  df_sim[v2] = _prep(df_sim, v2, cfg2)
 
     df_real_valid = df_real.dropna(subset=[v1, v2])
     df_sim_valid  = df_sim.dropna(subset=[v1, v2])
@@ -256,7 +253,10 @@ def run_type2_eval_one(config, real_csv, sim_csv, out_dir,
     df_real = pd.read_csv(real_csv, low_memory=False)
     df_sim  = pd.read_csv(sim_csv,  low_memory=False)
     os.makedirs(out_dir, exist_ok=True)
-
+    # Prepare Variables
+    for df in (df_real, df_sim):
+        for var, vcfg in config["variables"].items():
+            df[var] =_prep(df, var, vcfg)
     B = bootstrap_B
     rng = np.random.default_rng()
     results = []
@@ -315,6 +315,10 @@ def run_type2_eval(config, real_csv=None, sim_csv=None, out_dir=None,
     sample_n = cfg.get("bootstrap_sample_n", 500)
     ratio = cfg.get("bootstrap_sample_ratio", ratio)
 
+    # Prepare Variables
+    for df in (df_real, df_sim):
+        for var, vcfg in cfg["variables"].items():
+            df[var] =_prep(df, var, vcfg)
 
     print(f"\n================ TYPE 2 (STRENGTH) COMPARISON ================")
     print(f"Bootstrap {B} iterations | α={a}\n")

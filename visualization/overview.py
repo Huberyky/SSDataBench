@@ -21,9 +21,11 @@ DATASET_MAP = {
     "addhealth": "Add Health",
     "cfps": "CFPS",
     "gss_2018": "GSS",
-    "acs_1980": "ACS",
-    "cps_1980": "CPS-ASEC"
+    "acs_1980": "U.S. Census",
+    "cps_1980": "CPS-ASEC",
+    "US": "Understanding Society"
 }
+DESIRED_DATASET_ORDER =['nlsy', 'cfps', 'addhealth', 'US', 'acs_1980', 'cps_1980', 'gss_2018']
 MODEL_MAP = {
     # === OpenAI ===
     "gpt-3.5-turbo": "gpt-3.5-turbo",
@@ -133,8 +135,12 @@ def collect_summary_records(root: Path, single: bool) -> Tuple[pd.DataFrame, Lis
 def plot_heatmap(df: pd.DataFrame, out_dir: Path) -> Tuple[List[str], List[str]]:
     piv = df.pivot_table(index="model", columns=["type", "dataset"], values="avg_insignificant_rate")
     types = [f"type{i}" for i in range(1, 6) if f"type{i}" in piv.columns.get_level_values(0)]
-    datasets = sorted(df["dataset"].unique())
-    cols = [(t, d) for t in types for d in datasets if (t, d) in piv.columns]
+    cols = [
+    (t, d)
+    for t in types
+    for d in DESIRED_DATASET_ORDER
+    if (t, d) in piv.columns
+]
     piv = piv.reindex(columns=pd.MultiIndex.from_tuples(cols))
     piv["__avg__"] = piv.mean(axis=1)
     piv = piv.sort_values("__avg__", ascending=True)
@@ -218,7 +224,7 @@ def plot_heatmap(df: pd.DataFrame, out_dir: Path) -> Tuple[List[str], List[str]]
     plt.close(fig)
     print(f"Saved heatmap to {out_dir}")
 
-    return models, datasets
+    return models
 
 
 def collect_metric_records(
@@ -344,7 +350,7 @@ def main():
         raise ValueError(f"No valid summary files found under {args.root}")
 
     out_dir = Path("visualization_figures")
-    models_order, datasets_in_summary = plot_heatmap(df_summary, out_dir)
+    models_order= plot_heatmap(df_summary, out_dir)
 
 
 
