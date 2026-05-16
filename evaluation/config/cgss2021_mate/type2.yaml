@@ -1,0 +1,8 @@
+variables:
+  XA2: {type: categorical}
+  XA4: {type: categorical}
+  XA5: {type: categorical}
+  XA6: {type: categorical}
+  B101_1: {type: numeric}
+  B102_1: {type: numeric}
+  B103_1: {type: numeric}

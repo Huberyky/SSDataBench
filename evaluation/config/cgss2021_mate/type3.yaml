@@ -1,0 +1,13 @@
+predictors:
+  XA1: {type: categorical}
+  XA2: {type: categorical}
+  XA3: {type: categorical}
+  XA4: {type: categorical}
+  XA5: {type: categorical}
+  XA6: {type: categorical}
+  A2: {type: numeric}
+response:
+  B101_1: {type: numeric}
+  B102_1: {type: numeric}
+  B103_1: {type: numeric}
+model_type: ols

@@ -1,0 +1,14 @@
+real_csv: ./simulated_data/cgss2021_mate/sample.csv
+sim_csv: ./simulated_data/cgss2021_mate/sim.csv
+output_dir: ./evaluation_results/cgss2021_mate
+
+types:
+  - type1
+  - type2
+  - type3
+
+type_config_dir: ./evaluation/config/cgss2021_mate/
+type_code_dir: ./evaluation/code_by_type
+bootstrap_B: 100
+alpha: 0.05
+bootstrap_sample_n: 300

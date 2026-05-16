@@ -1,0 +1,35 @@
+context: >
+  Chinese adults surveyed in CGSS 2021 marriage-preference conjoint experiment.
+
+dataset:
+  dta_path: ./CGSS2021_clean.dta
+
+id_column: id
+
+respondent_variables:
+  gender:
+    source: A2
+    allowed: [1, 2]
+    description: 1=male, 2=female
+
+experiment:
+  rounds: [A, B, C]
+  profile_prefix_map:
+    A: XA
+    B: XB
+    C: XC
+  rating_columns:
+    A: B101_1
+    B: B102_1
+    C: B103_1
+
+prompt_template: |
+  你正在模拟一位中国社会调查（CGSS2021）受访者，在择偶实验中对三位候选对象进行评分。
+  候选对象属性如下：
+  甲：年龄={XA1}，收入={XA2}，家庭背景={XA3}，房产={XA4}，教育={XA5}，长相={XA6}
+  乙：年龄={XB1}，收入={XB2}，家庭背景={XB3}，房产={XB4}，教育={XB5}，长相={XB6}
+  丙：年龄={XC1}，收入={XC2}，家庭背景={XC3}，房产={XC4}，教育={XC5}，长相={XC6}
+
+  请仅返回 JSON，包含三个键：B101_1, B102_1, B103_1。
+  每个分值必须是 1~7 的整数，1=非常不理想，7=非常理想。
+  要求评分体现权衡逻辑：收入、教育、长相通常正向；年龄匹配、家庭背景、房产会影响综合评分。
